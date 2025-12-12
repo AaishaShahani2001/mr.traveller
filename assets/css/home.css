@@ -1,0 +1,232 @@
+/* -------- General Settings -------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f5f7ff;
+    color: #333;
+    
+}
+
+/* -------- Header -------- */
+.header {
+    background: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: bold;
+}
+.logo span {
+    color: #007bff;
+}
+
+.nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #007bff;
+}
+
+.btn {
+    padding: 6px 14px;
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
+}
+
+/* -------- Hero Section -------- */
+.hero {
+    
+    position: relative;
+    height: 80vh;
+    background-image: url("../img/hero.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+/* Dark overlay */
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content h1 {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.hero-content p {
+    font-size: 18px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: black;
+}
+
+.hero-btn {
+    display: inline-block;
+    padding: 14px 30px;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: transform 0.3s, background 0.3s;
+}
+
+.hero-btn:hover {
+    background: #005fcc;
+    transform: translateY(-2px);
+}
+
+
+/* -------- Destinations -------- */
+.destinations {
+    padding: 70px 0;
+    text-align: center;
+}
+
+.section-title {
+    font-size: 34px;
+    margin-bottom: 40px;
+}
+
+.dest-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.dest-card {
+    width: 300px;
+    background: white;
+    border-radius: 14px;
+    padding-bottom: 25px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.dest-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.15);
+}
+
+/* Package image with opacity */
+.dest-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    opacity: 0.75;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.dest-card:hover img {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.dest-card h3 {
+    margin: 18px 0 8px;
+    font-size: 20px;
+}
+
+.dest-card p {
+    font-size: 15px;
+    color: #666;
+}
+
+.book-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 22px;
+    background: #007bff;
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.book-btn:hover {
+    background: #005fcc;
+}
+
+/* -------- CTA Section -------- */
+.cta {
+    margin-top: 80px;
+    padding: 60px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #007bff, #005fcc);
+    color: white;
+}
+
+.cta h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.cta p {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.cta-btn {
+    padding: 12px 30px;
+    background: white;
+    color: #007bff;
+    font-weight: bold;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: transform 0.3s;
+}
+
+.cta-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* -------- Footer -------- */
+.footer {
+    margin-top: 50px;
+    padding: 25px;
+    text-align: center;
+    background: #222;
+    color: #ccc;
+    font-size: 14px;
+}
