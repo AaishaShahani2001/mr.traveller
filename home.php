@@ -66,7 +66,7 @@ if (!isset($_SESSION['user_id'])) {
                     <img src="assets/img/maldives.jpg">
                     <div class="card-info">
                         <h3>Maldives</h3>
-                        <p>26+ Activities</p>
+                        <p>26+ Activities • 29+ Tours</p>
                     </div>
                 </div>
 
@@ -74,7 +74,7 @@ if (!isset($_SESSION['user_id'])) {
                     <img src="assets/img/greece.jpg">
                     <div class="card-info">
                         <h3>Greece</h3>
-                        <p>41+ Activities</p>
+                        <p>41+ Activities • 10+ Tours</p>
                     </div>
                 </div>
 
@@ -82,7 +82,7 @@ if (!isset($_SESSION['user_id'])) {
                     <img src="assets/img/brazil.jpg">
                     <div class="card-info">
                         <h3>Brazil</h3>
-                        <p>56+ Tours</p>
+                        <p>56+ Tours • 12+ Tours</p>
                     </div>
                 </div>
 
@@ -107,6 +107,14 @@ if (!isset($_SESSION['user_id'])) {
                     <div class="card-info">
                         <h3>Italy</h3>
                         <p>19+ Activities</p>
+                    </div>
+                </div>
+
+                <div class="carousel-card">
+                    <img src="assets/img/INDIA.jpg">
+                    <div class="card-info">
+                        <h3>India</h3>
+                        <p>35+ Activities • 42+ Tours </p>
                     </div>
                 </div>
 
