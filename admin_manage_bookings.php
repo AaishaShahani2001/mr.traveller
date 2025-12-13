@@ -2,185 +2,383 @@
 session_start();
 require "config.php";
 
-// Admin only
+/* ---------- Admin only ---------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// Filters
+/* ---------- Toast message ---------- */
+$msg = $_GET['msg'] ?? "";
+
+/* ---------- Filters ---------- */
 $status = $_GET['status'] ?? 'all';
 $search = trim($_GET['search'] ?? '');
 
-// Base query
-$query = "
+/* ---------- Pagination ---------- */
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 8;
+$offset = ($page - 1) * $perPage;
+
+/* ---------- Base Query ---------- */
+$where = "WHERE 1";
+$params = [];
+
+if ($status !== 'all') {
+    $where .= " AND b.status = ?";
+    $params[] = $status;
+}
+
+if ($search !== '') {
+    $where .= " AND (u.full_name LIKE ? OR d.title LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
+
+/* ---------- Count ---------- */
+$countSql = "
+SELECT COUNT(*)
+FROM bookings b
+JOIN users u ON b.user_id = u.user_id
+JOIN destinations d ON b.dest_id = d.dest_id
+$where
+";
+$countStmt = $conn->prepare($countSql);
+$countStmt->execute($params);
+$totalRows = (int)$countStmt->fetchColumn();
+$totalPages = max(1, ceil($totalRows / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+
+/* ---------- Fetch Data ---------- */
+$sql = "
 SELECT b.*, u.full_name, d.title
 FROM bookings b
 JOIN users u ON b.user_id = u.user_id
 JOIN destinations d ON b.dest_id = d.dest_id
-WHERE 1
+$where
+ORDER BY b.booking_id DESC
+LIMIT $perPage OFFSET $offset
 ";
 
-$params = [];
-
-// Status filter
-if ($status !== 'all') {
-    $query .= " AND b.status = ?";
-    $params[] = $status;
-}
-
-// Search filter (user OR package)
-if (!empty($search)) {
-    $query .= " AND (u.full_name LIKE ? OR d.title LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-$query .= " ORDER BY b.booking_id DESC";
-
-$stmt = $conn->prepare($query);
+$stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function q($arr = []) {
+    return http_build_query(array_merge($_GET, $arr));
+}
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Manage Bookings</title>
+<meta charset="UTF-8">
+<title>Manage Bookings | Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body { font-family: Arial; background:#f5f6fa; }
-.container { width:95%; margin:auto; }
+* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+
+body {
+    background: #f5f6fa;
+    padding: 22px;
+}
+
+/* Header */
+.header {
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.header h2 { margin: 0; }
+.back-btn {
+    background: #444;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+/* Filters */
+.filters {
+    max-width: 1200px;
+    margin: 14px auto;
+    background: white;
+    padding: 14px;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+}
+
+.status-links a {
+    margin-right: 12px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #555;
+}
+.status-links a.active {
+    color: #007bff;
+}
+
+.search-box input {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+.search-box button {
+    padding: 10px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* Table */
+.table-box {
+    max-width: 1200px;
+    margin: auto;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    overflow: hidden;
+}
 
 table {
-    width:100%; margin-top:20px; border-collapse:collapse;
-    background:white; box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    border-collapse: collapse;
 }
-th, td { padding:12px; border:1px solid #ddd; }
-th { background:#8e44ad; color:white; }
+th {
+    background: #8e44ad;
+    color: white;
+    padding: 14px;
+    text-align: left;
+}
+td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+}
+tr:hover td { background: #f2f6ff; }
 
-.status-pending { color:orange; font-weight:bold; }
-.status-confirmed { color:green; font-weight:bold; }
-.status-cancelled { color:red; font-weight:bold; }
+/* Status */
+.status {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: inline-block;
+}
+.pending { background:#fff3cd; color:#856404; }
+.confirmed { background:#e9f9ee; color:#2e7d32; }
+.cancelled { background:#fdecea; color:#c0392b; }
 
-.action {
-    padding:6px 12px;
-    border-radius:5px;
-    color:white;
-    text-decoration:none;
-    font-size:14px;
+/* Actions */
+.actions button {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: none;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
 }
 .approve { background:#27ae60; }
 .cancel { background:#c0392b; }
 
-.filters {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:20px;
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+.pagination a {
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: white;
+    color: #333;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+.pagination a.active {
+    background: #007bff;
+    color: white;
 }
 
-.filters a {
-    margin-right:10px;
-    text-decoration:none;
-    font-weight:bold;
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: .5s;
+    z-index: 9999;
 }
+.toast.show { opacity: 1; transform: translateY(0); }
 
-.search-box input {
-    padding:8px;
-    width:220px;
+/* Modal */
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
 }
-.search-box button {
-    padding:8px 14px;
-    background:#2980b9;
-    color:white;
-    border:none;
-    cursor:pointer;
+.modal-bg.show { display: flex; }
+.modal {
+    background: white;
+    padding: 22px;
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
 }
+.modal button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.cancel-btn { background:#e9ecef; }
+.confirm-btn { background:#dc3545; color:white; }
 
-.msg { text-align:center; color:green; font-weight:bold; margin-top:10px; }
+/* Responsive */
+@media (max-width: 900px) {
+    .filters { grid-template-columns: 1fr; }
+    table thead { display: none; }
+    table, tr, td { display: block; }
+    td { padding: 10px 14px; }
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="header">
+    <h2>Manage Bookings</h2>
+    <a href="admin_dashboard.php" class="back-btn">← Dashboard</a>
+</div>
 
-<h2 style="text-align:center;">Manage Bookings</h2>
-
-<!-- STATUS FILTERS -->
 <div class="filters">
-    <div>
-        <a href="admin_manage_bookings.php?status=all">All</a>
-        <a href="admin_manage_bookings.php?status=pending">Pending</a>
-        <a href="admin_manage_bookings.php?status=confirmed">Confirmed</a>
-        <a href="admin_manage_bookings.php?status=cancelled">Cancelled</a>
+    <div class="status-links">
+        <?php
+        $statuses = ['all'=>'All','pending'=>'Pending','confirmed'=>'Confirmed','cancelled'=>'Cancelled'];
+        foreach ($statuses as $k=>$v):
+        ?>
+            <a class="<?= $status===$k?'active':'' ?>" href="?<?= q(['status'=>$k,'page'=>1]) ?>"><?= $v ?></a>
+        <?php endforeach; ?>
     </div>
 
-    <!-- SEARCH -->
-    <form method="GET" class="search-box">
-        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status); ?>">
-        <input type="text" name="search" placeholder="Search user or package"
-               value="<?php echo htmlspecialchars($search); ?>">
-        <button type="submit">Search</button>
+    <form class="search-box">
+        <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+        <input type="text" name="search" placeholder="Search user or package" value="<?= htmlspecialchars($search) ?>">
+        <button>Search</button>
     </form>
 </div>
 
-<?php if (isset($_GET['msg']) && $_GET['msg']=='updated'): ?>
-    <p class="msg">Booking status updated successfully!</p>
-<?php endif; ?>
-
+<div class="table-box">
 <table>
+<thead>
 <tr>
     <th>User</th>
     <th>Package</th>
-    <th>Travel Date</th>
+    <th>Date</th>
     <th>People</th>
     <th>Total</th>
     <th>Status</th>
     <th>Action</th>
 </tr>
+</thead>
 
-<?php if (count($bookings) === 0): ?>
-<tr>
-    <td colspan="7" style="text-align:center;">No bookings found.</td>
-</tr>
+<tbody>
+<?php if (!$bookings): ?>
+<tr><td colspan="7" style="text-align:center;">No bookings found</td></tr>
 <?php endif; ?>
 
 <?php foreach ($bookings as $b): ?>
 <tr>
-    <td><?php echo htmlspecialchars($b['full_name']); ?></td>
-    <td><?php echo htmlspecialchars($b['title']); ?></td>
-    <td><?php echo $b['travel_date']; ?></td>
-    <td><?php echo $b['number_of_people']; ?></td>
-    <td>$<?php echo $b['total_amount']; ?></td>
-
-    <td class="status-<?php echo $b['status']; ?>">
-        <?php echo ucfirst($b['status']); ?>
+    <td data-label="User"><?= htmlspecialchars($b['full_name']) ?></td>
+    <td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
+    <td data-label="Date"><?= $b['travel_date'] ?></td>
+    <td data-label="People"><?= $b['number_of_people'] ?></td>
+    <td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
+    <td data-label="Status">
+        <span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span>
     </td>
-
-    <td>
-        <?php if ($b['status'] === 'pending'): ?>
-            <a class="action approve"
-               href="admin_update_booking.php?id=<?php echo $b['booking_id']; ?>&status=confirmed"
-               onclick="return confirm('Approve this booking?')">
-               Approve
-            </a>
-
-            <a class="action cancel"
-               href="admin_update_booking.php?id=<?php echo $b['booking_id']; ?>&status=cancelled"
-               onclick="return confirm('Cancel this booking?')">
-               Cancel
-            </a>
-        <?php else: ?>
-            —
+    <td data-label="Action">
+        <?php if ($b['status']==='pending'): ?>
+            <button class="approve"
+                onclick="openModal('admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=confirmed')">
+                Approve
+            </button>
+            <button class="cancel"
+                onclick="openModal('admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled')">
+                Cancel
+            </button>
+        <?php else: ?>—
         <?php endif; ?>
     </td>
 </tr>
 <?php endforeach; ?>
-
+</tbody>
 </table>
-
 </div>
+
+<div class="pagination">
+<?php for ($i=1;$i<=$totalPages;$i++): ?>
+<a class="<?= $i==$page?'active':'' ?>" href="?<?= q(['page'=>$i]) ?>"><?= $i ?></a>
+<?php endfor; ?>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <h3>Confirm Action</h3>
+        <p>This action cannot be undone.</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            <a id="actionLink"><button class="confirm-btn">Confirm</button></a>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<?php if ($msg==='updated'): ?>
+<div class="toast" id="toast">Booking status updated successfully ✔</div>
+<script>
+setTimeout(()=>document.getElementById('toast').classList.add('show'),200);
+setTimeout(()=>document.getElementById('toast').classList.remove('show'),3200);
+</script>
+<?php endif; ?>
+
+<script>
+function openModal(url){
+    document.getElementById('actionLink').href = url;
+    document.getElementById('modal').classList.add('show');
+}
+function closeModal(){
+    document.getElementById('modal').classList.remove('show');
+}
+</script>
 
 </body>
 </html>

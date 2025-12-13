@@ -2,25 +2,37 @@
 session_start();
 require "config.php";
 
-if ($_SESSION['role'] !== 'admin') {
+/* -------- Security: Admin only -------- */
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-$id = $_GET['id'];
-
-// delete image file also
-$img = $conn->prepare("SELECT image FROM destinations WHERE dest_id=?");
-$img->execute([$id]);
-$row = $img->fetch();
-
-if ($row && file_exists("uploads/" . $row['image'])) {
-    unlink("uploads/" . $row['image']);
+/* -------- Validate ID -------- */
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header("Location: admin_manage_destinations.php");
+    exit;
 }
 
-$del = $conn->prepare("DELETE FROM destinations WHERE dest_id=?");
-$del->execute([$id]);
+$id = (int)$_GET['id'];
 
-header("Location: admin_manage_destinations.php");
+/* -------- Fetch image name -------- */
+$imgStmt = $conn->prepare("SELECT image FROM destinations WHERE dest_id = ?");
+$imgStmt->execute([$id]);
+$destination = $imgStmt->fetch(PDO::FETCH_ASSOC);
+
+/* -------- Delete image file safely -------- */
+if ($destination && !empty($destination['image'])) {
+    $imagePath = "uploads/" . $destination['image'];
+    if (file_exists($imagePath)) {
+        unlink($imagePath);
+    }
+}
+
+/* -------- Delete destination record -------- */
+$delStmt = $conn->prepare("DELETE FROM destinations WHERE dest_id = ?");
+$delStmt->execute([$id]);
+
+/* -------- Redirect with success message -------- */
+header("Location: admin_manage_destinations.php?msg=deleted");
 exit;
-?>

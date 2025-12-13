@@ -2,31 +2,34 @@
 session_start();
 require "config.php";
 
-// Admin protection
+/* -------- Admin protection -------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// Validate id
-if (!isset($_GET['id'])) {
-    die("Destination ID missing!");
+/* -------- Validate ID -------- */
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header("Location: admin_manage_destinations.php");
+    exit;
 }
 
-$id = $_GET['id'];
+$id = (int)$_GET['id'];
 
-// Fetch current destination
+/* -------- Fetch destination -------- */
 $stmt = $conn->prepare("SELECT * FROM destinations WHERE dest_id = ?");
 $stmt->execute([$id]);
 $dest = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$dest) {
-    die("Destination not found!");
+    header("Location: admin_manage_destinations.php");
+    exit;
 }
 
 $error = "";
+$success = false;
 
-// Handle update
+/* -------- Handle update -------- */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $title = trim($_POST['title']);
@@ -36,29 +39,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $duration = trim($_POST['duration']);
     $description = trim($_POST['description']);
 
-    // Keep old image by default
-    $image_name = $dest['image'];
+    $image_name = $dest['image']; // keep old by default
 
-    // If new image uploaded
+    /* Image upload */
     if (!empty($_FILES['image']['name'])) {
-        $new_image = time() . "_" . basename($_FILES['image']['name']);
+        $newImage = time() . "_" . basename($_FILES['image']['name']);
         $tmp = $_FILES['image']['tmp_name'];
 
-        // Upload new image
-        if (move_uploaded_file($tmp, "uploads/" . $new_image)) {
-
-            // Delete old image file
+        if (move_uploaded_file($tmp, "uploads/" . $newImage)) {
             if (!empty($dest['image']) && file_exists("uploads/" . $dest['image'])) {
                 unlink("uploads/" . $dest['image']);
             }
-
-            $image_name = $new_image;
+            $image_name = $newImage;
         } else {
-            $error = "Image upload failed!";
+            $error = "Image upload failed.";
         }
     }
 
-    // If no image upload error, update DB
     if ($error === "") {
         $update = $conn->prepare("
             UPDATE destinations 
@@ -67,16 +64,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         ");
 
         $update->execute([
-            $title,
-            $country,
-            $city,
-            $price,
-            $duration,
-            $description,
-            $image_name,
-            $id
+            $title, $country, $city, $price,
+            $duration, $description, $image_name, $id
         ]);
 
+        $success = true;
+
+        // Redirect after update
         header("Location: admin_manage_destinations.php?msg=updated");
         exit;
     }
@@ -84,98 +78,241 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Edit Destination</title>
-    <style>
-        body { font-family: Arial; background:#eef3ff; padding:40px; }
-        .box {
-            width:520px; margin:auto; background:white; padding:25px;
-            border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.15);
-        }
-        h2 { margin-bottom:10px; }
-        label { font-weight:bold; display:block; margin-top:10px; }
-        input, textarea { width:100%; padding:10px; margin-top:6px; }
-        textarea { resize:vertical; }
-        .row { display:flex; gap:10px; }
-        .row > div { flex:1; }
+<meta charset="UTF-8">
+<title>Edit Destination | Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-        .img-preview {
-            width:100%;
-            height:220px;
-            object-fit:cover;
-            border-radius:8px;
-            margin:10px 0;
-            border:1px solid #ddd;
-        }
+<style>
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
 
-        button {
-            width:100%; padding:12px; margin-top:15px;
-            background:#27ae60; color:white; border:none;
-            border-radius:6px; font-weight:bold; cursor:pointer;
-        }
-        button:hover { background:#1f8b4d; }
-        .back {
-            display:inline-block; margin-top:15px;
-            text-decoration:none; color:#007bff;
-        }
-        .error { color:red; margin-top:10px; }
-    </style>
+body {
+    background: linear-gradient(135deg, #eef3ff, #dbe6ff);
+    padding: 24px;
+}
+
+/* Card */
+.card {
+    max-width: 1000px;
+    margin: auto;
+    background: white;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.18);
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 26px;
+}
+
+.back-btn {
+    text-decoration: none;
+    background: #444;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 10px;
+    transition: 0.2s;
+}
+.back-btn:hover { background: #222; }
+
+/* Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.full {
+    grid-column: 1 / 3;
+}
+
+/* Inputs */
+label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #444;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+textarea {
+    resize: none;
+}
+
+/* Image preview */
+.img-preview {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 14px;
+    margin-top: 10px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+
+/* Button */
+button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #28a745, #1f8b4d);
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(40,167,69,0.5);
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 800;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: 0.5s;
+    z-index: 999;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.error {
+    background: #ffe5e5;
+    color: #b00020;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .full {
+        grid-column: 1;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<div class="box">
-    <h2>Edit Destination</h2>
-    <p><b>ID:</b> <?php echo $dest['dest_id']; ?></p>
+<div class="card">
 
-    <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
+    <div class="header">
+        <h2>Edit Destination</h2>
+        <a href="admin_manage_destinations.php" class="back-btn">← Back</a>
+    </div>
+
+    <?php if ($error): ?>
+        <div class="error"><?php echo htmlspecialchars($error); ?></div>
+    <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">
 
-        <label>Title</label>
-        <input type="text" name="title" value="<?php echo htmlspecialchars($dest['title']); ?>" required>
+        <div class="form-grid">
 
-        <div class="row">
+            <div class="full">
+                <label>Package Title</label>
+                <input type="text" name="title" value="<?php echo htmlspecialchars($dest['title']); ?>" required>
+            </div>
+
             <div>
                 <label>Country</label>
                 <input type="text" name="country" value="<?php echo htmlspecialchars($dest['country']); ?>">
             </div>
+
             <div>
                 <label>City</label>
                 <input type="text" name="city" value="<?php echo htmlspecialchars($dest['city']); ?>">
             </div>
-        </div>
 
-        <div class="row">
             <div>
                 <label>Price</label>
                 <input type="number" step="0.01" name="price" value="<?php echo htmlspecialchars($dest['price']); ?>" required>
             </div>
+
             <div>
                 <label>Duration</label>
                 <input type="text" name="duration" value="<?php echo htmlspecialchars($dest['duration']); ?>">
             </div>
+
+            <div class="full">
+                <label>Description</label>
+                <textarea name="description" rows="4"><?php echo htmlspecialchars($dest['description']); ?></textarea>
+            </div>
+
+            <div class="full">
+                <label>Current Image</label>
+                <?php if (!empty($dest['image'])): ?>
+                    <img class="img-preview" src="uploads/<?php echo htmlspecialchars($dest['image']); ?>">
+                <?php else: ?>
+                    <p>No image uploaded.</p>
+                <?php endif; ?>
+            </div>
+
+            <div class="full">
+                <label>Change Image (optional)</label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+
         </div>
 
-        <label>Description</label>
-        <textarea name="description" rows="5"><?php echo htmlspecialchars($dest['description']); ?></textarea>
-
-        <label>Current Image</label>
-        <?php if (!empty($dest['image'])): ?>
-            <img class="img-preview" src="uploads/<?php echo $dest['image']; ?>" alt="Current image">
-        <?php else: ?>
-            <p>No image uploaded.</p>
-        <?php endif; ?>
-
-        <label>Change Image (optional)</label>
-        <input type="file" name="image" accept="image/*">
-
         <button type="submit">Update Destination</button>
-
-        <a class="back" href="admin_manage_destinations.php">← Back to Manage Destinations</a>
     </form>
+
 </div>
+
+<?php if ($success): ?>
+<div class="toast" id="toast">Destination updated successfully ✔</div>
+<script>
+const toast = document.getElementById("toast");
+setTimeout(() => toast.classList.add("show"), 200);
+setTimeout(() => toast.classList.remove("show"), 3200);
+</script>
+<?php endif; ?>
 
 </body>
 </html>
