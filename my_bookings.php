@@ -30,10 +30,7 @@ $bookings = $sql->fetchAll(PDO::FETCH_ASSOC);
 <style>
 * { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
 
-body {
-    margin: 0;
-    background: #f5f7ff;
-}
+body { margin:0; background:#f5f7ff; }
 
 .container {
     max-width: 1200px;
@@ -41,8 +38,21 @@ body {
     padding: 40px 20px;
 }
 
-h2 {
+h2 { margin-bottom: 20px; }
+
+/* Back button */
+.back-btn {
+    display: inline-block;
     margin-bottom: 20px;
+    color: #007bff;
+    font-weight: bold;
+    text-decoration: none;
+    transition: transform 0.3s, color 0.3s;
+}
+
+.back-btn:hover {
+    color: #005fcc;
+    transform: translateX(-5px);
 }
 
 /* Toast */
@@ -55,20 +65,14 @@ h2 {
     padding: 14px 22px;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    animation: slideIn 0.5s ease;
     z-index: 999;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all .5s ease;
 }
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(40px); }
-    to { opacity: 1; transform: translateX(0); }
-}
+.toast.show { opacity: 1; transform: translateY(0); }
 
 /* Table */
-.table-wrapper {
-    overflow-x: auto;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -81,72 +85,79 @@ table {
 th, td {
     padding: 14px;
     border-bottom: 1px solid #eee;
-    text-align: left;
 }
 
 th {
     background: #007bff;
     color: white;
-    font-weight: 600;
 }
 
-tr:hover {
-    background: #f1f4ff;
-}
-
-/* Status badges */
 .status {
     padding: 6px 14px;
     border-radius: 20px;
-    font-size: 14px;
     font-weight: bold;
-    display: inline-block;
 }
+.pending { background:#fff3cd; color:#856404; }
+.confirmed { background:#d4edda; color:#155724; }
+.cancelled { background:#f8d7da; color:#721c24; }
 
-.pending { background: #fff3cd; color: #856404; }
-.confirmed { background: #d4edda; color: #155724; }
-.cancelled { background: #f8d7da; color: #721c24; }
-
-/* Cancel button */
-.cancel-btn {
-    color: #e74c3c;
+.action-btn {
+    margin-right: 10px;
     font-weight: bold;
-    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    background: none;
 }
 
-.cancel-btn:hover {
-    text-decoration: underline;
+.cancel-btn { color:#e74c3c; }
+.invoice-btn { color:#007bff; }
+
+/* Modal */
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
 }
+.modal-bg.show { display: flex; }
 
-/* Mobile cards */
-@media (max-width: 768px) {
+.modal {
+    background: white;
+    padding: 22px;
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
+}
+.modal h3 { margin-top: 0; }
+.modal button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-cancel { background:#e9ecef; }
+.btn-confirm { background:#dc3545; color:white; }
 
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-
-    thead {
-        display: none;
-    }
-
+/* Responsive */
+@media(max-width:768px){
+    table, thead, tbody, th, td, tr { display:block; }
+    thead { display:none; }
     tr {
-        background: white;
-        margin-bottom: 20px;
-        padding: 18px;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        background:white;
+        margin-bottom:20px;
+        padding:18px;
+        border-radius:16px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.12);
     }
-
-    td {
-        border: none;
-        padding: 6px 0;
-    }
-
+    td { border:none; padding:6px 0; }
     td::before {
         content: attr(data-label);
-        font-weight: 600;
-        color: #555;
-        display: block;
+        font-weight: bold;
+        display:block;
+        color:#555;
     }
 }
 </style>
@@ -155,67 +166,91 @@ tr:hover {
 <body>
 
 <?php if (isset($_GET['msg']) && $_GET['msg'] === 'booked'): ?>
-    <div class="toast">Booking successful 🎉</div>
+<div class="toast" id="toast">Booking successful 🎉</div>
+<script>
+const toast = document.getElementById("toast");
+setTimeout(()=>toast.classList.add("show"),200);
+setTimeout(()=>toast.classList.remove("show"),3000);
+</script>
 <?php endif; ?>
 
 <div class="container">
-    <h2>My Bookings</h2>
 
-    <?php if (count($bookings) === 0): ?>
-        <p>You have no bookings yet.</p>
-    <?php else: ?>
+<a href="home.php" class="back-btn">← Back to Home</a>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Package</th>
-                    <th>Location</th>
-                    <th>Travel Date</th>
-                    <th>People</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                    <th>Booked On</th>
-                </tr>
-            </thead>
+<h2>My Bookings</h2>
 
-            <tbody>
-            <?php foreach ($bookings as $b): ?>
-                <tr>
-                    <td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
-                    <td data-label="Location"><?= htmlspecialchars($b['country']) ?> - <?= htmlspecialchars($b['city']) ?></td>
-                    <td data-label="Travel Date"><?= $b['travel_date'] ?></td>
-                    <td data-label="People"><?= $b['number_of_people'] ?></td>
-                    <td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
+<?php if (!$bookings): ?>
+<p>You have no bookings yet.</p>
+<?php else: ?>
 
-                    <td data-label="Status">
-                        <span class="status <?= $b['status'] ?>">
-                            <?= ucfirst($b['status']) ?>
-                        </span>
-                    </td>
+<table>
+<thead>
+<tr>
+    <th>Package</th>
+    <th>Location</th>
+    <th>Date</th>
+    <th>People</th>
+    <th>Total</th>
+    <th>Status</th>
+    <th>Actions</th>
+</tr>
+</thead>
 
-                    <td data-label="Action">
-                        <?php if ($b['status'] === 'pending'): ?>
-                            <a class="cancel-btn"
-                               href="user_cancel_booking.php?id=<?= $b['booking_id'] ?>"
-                               onclick="return confirm('Cancel this booking?')">
-                               Cancel
-                            </a>
-                        <?php else: ?>
-                            —
-                        <?php endif; ?>
-                    </td>
+<tbody>
+<?php foreach ($bookings as $b): ?>
+<tr>
+<td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
+<td data-label="Location"><?= htmlspecialchars($b['country']) ?> - <?= htmlspecialchars($b['city']) ?></td>
+<td data-label="Date"><?= $b['travel_date'] ?></td>
+<td data-label="People"><?= $b['number_of_people'] ?></td>
+<td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
+<td data-label="Status">
+    <span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span>
+</td>
+<td data-label="Actions">
+    <a class="action-btn invoice-btn"
+       href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
+       target="_blank">
+       Invoice
+    </a>
 
-                    <td data-label="Booked On"><?= $b['booking_date'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-
+    <?php if ($b['status'] === 'pending'): ?>
+        <button class="action-btn cancel-btn"
+            onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">
+            Cancel
+        </button>
     <?php endif; ?>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+
+<?php endif; ?>
 </div>
+
+<!-- Cancel Modal -->
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <h3>Cancel Booking</h3>
+        <p>Are you sure you want to cancel this booking?</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn-cancel" onclick="closeModal()">No</button>
+            <a id="cancelLink"><button class="btn-confirm">Yes, Cancel</button></a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(url){
+    document.getElementById("cancelLink").href = url;
+    document.getElementById("modal").classList.add("show");
+}
+function closeModal(){
+    document.getElementById("modal").classList.remove("show");
+}
+</script>
 
 </body>
 </html>
