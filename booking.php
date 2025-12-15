@@ -2,20 +2,20 @@
 session_start();
 require "config.php";
 
-// User must be logged in
+/* ---------- Login check ---------- */
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-// Destination id required
-if (!isset($_GET['id'])) {
-    die("No destination selected!");
+/* ---------- Validate destination ---------- */
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid destination!");
 }
 
-$dest_id = $_GET['id'];
+$dest_id = (int)$_GET['id'];
 
-// Fetch destination details
+/* ---------- Fetch destination ---------- */
 $sql = $conn->prepare("SELECT * FROM destinations WHERE dest_id = ?");
 $sql->execute([$dest_id]);
 $dest = $sql->fetch(PDO::FETCH_ASSOC);
@@ -24,14 +24,13 @@ if (!$dest) {
     die("Destination not found!");
 }
 
-// Handle form submit
-$success_msg = "";
+/* ---------- Handle booking ---------- */
 $error_msg = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $travel_date = $_POST['travel_date'];
-    $number_of_people = (int) $_POST['number_of_people'];
+    $number_of_people = (int)$_POST['number_of_people'];
 
     if ($number_of_people < 1) {
         $error_msg = "Number of people must be at least 1.";
@@ -40,9 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $booking_date = date('Y-m-d');
         $total_amount = $dest['price'] * $number_of_people;
 
-        $stmt = $conn->prepare("INSERT INTO bookings 
+        $stmt = $conn->prepare("
+            INSERT INTO bookings
             (user_id, dest_id, booking_date, travel_date, number_of_people, total_amount, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        ");
 
         $stmt->execute([
             $user_id,
@@ -53,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $total_amount
         ]);
 
-        // Redirect or show message
         header("Location: my_bookings.php?msg=booked");
         exit;
     }
@@ -61,98 +61,197 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Book: <?php echo $dest['title']; ?> - Mr.Traveller</title>
+<meta charset="UTF-8">
+<title>Book: <?= htmlspecialchars($dest['title']) ?> | Mr.Traveller</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-        body { font-family: Arial; background:#f5f7ff; margin:0; padding:0; }
-        .container { width:90%; margin:auto; padding:30px 0; }
+<style>
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
 
-        .booking-box {
-            background:white;
-            padding:20px;
-            border-radius:10px;
-            box-shadow:0 2px 10px rgba(0,0,0,0.1);
-            display:flex;
-            gap:30px;
-        }
+body {
+    margin: 0;
+    background: #f5f7ff;
+}
 
-        .image-box { flex:1; }
-        .image-box img {
-            width:100%;
-            border-radius:10px;
-            height:350px;
-            object-fit:cover;
-        }
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px 20px;
+}
 
-        .form-box { flex:1.2; }
+/* Back link */
+.back-link {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #007bff;
+    text-decoration: none;
+    transition: transform 0.3s, color 0.3s;
+}
+.back-link:hover {
+    color: #005fcc;
+    transform: translateX(-4px);
+}
 
-        h2 { margin-bottom:10px; }
-        .location { font-weight:bold; margin-bottom:8px; }
-        .price { color:#007bff; font-size:18px; margin-bottom:10px; }
-        .duration { margin-bottom:15px; }
+/* Card */
+.booking-box {
+    background: white;
+    padding: 24px;
+    border-radius: 18px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
 
-        label { display:block; margin-top:10px; font-weight:bold; }
-        input, button {
-            width:100%;
-            padding:10px;
-            margin-top:5px;
-        }
-        button {
-            background:#007bff;
-            color:white;
-            border:none;
-            border-radius:6px;
-            font-weight:bold;
-            cursor:pointer;
-            margin-top:15px;
-        }
-        button:hover { background:#005fcc; }
+/* Image */
+.image-box {
+    flex: 1;
+}
 
-        .error { color:red; margin-top:10px; }
-        .success { color:green; margin-top:10px; }
+.image-box img {
+    width: 100%;
+    height: 380px;
+    object-fit: contain;        /* ✅ no crop */
+    background: #f1f3ff;
+    border-radius: 16px;
+}
 
-    </style>
+/* Form */
+.form-box {
+    flex: 1.2;
+}
+
+.form-box h2 {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+
+.location {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.price {
+    font-size: 22px;
+    color: #007bff;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.duration {
+    margin-bottom: 18px;
+    color: #444;
+}
+
+/* Form fields */
+label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 30px;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+button:hover {
+    background: #005fcc;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+/* Error */
+.error {
+    margin-top: 15px;
+    color: #c0392b;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .booking-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .image-box img {
+        height: 300px;
+    }
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
+
+    <a href="view_destination.php?id=<?= $dest['dest_id'] ?>" class="back-link">
+        ← Back to Destination
+    </a>
+
     <div class="booking-box">
 
-        <!-- LEFT: IMAGE -->
+        <!-- IMAGE -->
         <div class="image-box">
-            <img src="uploads/<?php echo $dest['image']; ?>" alt="Image">
+            <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="Destination">
         </div>
 
-        <!-- RIGHT: BOOKING FORM -->
+        <!-- FORM -->
         <div class="form-box">
-            <h2><?php echo $dest['title']; ?></h2>
+            <h2><?= htmlspecialchars($dest['title']) ?></h2>
 
             <p class="location">
-                <?php echo $dest['country']; ?> — <?php echo $dest['city']; ?>
+                <?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?>
             </p>
 
-            <p class="price">Price per person: $<?php echo $dest['price']; ?></p>
-            <p class="duration">Duration: <?php echo $dest['duration']; ?></p>
+            <p class="price">$<?= number_format($dest['price'],2) ?> per person</p>
+            <p class="duration">Duration: <?= htmlspecialchars($dest['duration']) ?></p>
 
             <form method="POST">
-                <label>Travel Date:</label>
+                <label>Travel Date</label>
                 <input type="date" name="travel_date" required>
 
-                <label>Number of People:</label>
+                <label>Number of People</label>
                 <input type="number" name="number_of_people" value="1" min="1" required>
 
                 <button type="submit">Confirm Booking</button>
             </form>
 
-            <?php
-            if (!empty($error_msg)) echo "<p class='error'>$error_msg</p>";
-            if (!empty($success_msg)) echo "<p class='success'>$success_msg</p>";
-            ?>
+            <?php if (!empty($error_msg)): ?>
+                <p class="error"><?= htmlspecialchars($error_msg) ?></p>
+            <?php endif; ?>
         </div>
 
     </div>
+
 </div>
 
 </body>

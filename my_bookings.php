@@ -14,96 +14,206 @@ $sql = $conn->prepare("
     FROM bookings b
     JOIN destinations d ON b.dest_id = d.dest_id
     WHERE b.user_id = ?
-    ORDER BY b.created_at DESC
+    ORDER BY b.booking_id DESC
 ");
 $sql->execute([$user_id]);
 $bookings = $sql->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Bookings - Mr.Traveller</title>
-    <style>
-        body { font-family: Arial; background:#f5f7ff; margin:0; padding:0; }
-        .container { width:90%; margin:auto; padding:30px 0; }
+<meta charset="UTF-8">
+<title>My Bookings | Mr.Traveller</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-        h2 { margin-bottom:20px; }
+<style>
+* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
 
-        table {
-            width:100%;
-            border-collapse:collapse;
-            background:white;
-            box-shadow:0 2px 10px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding:12px;
-            border:1px solid #ddd;
-            text-align:left;
-        }
-        th {
-            background:#007bff;
-            color:white;
-        }
+body {
+    margin: 0;
+    background: #f5f7ff;
+}
 
-        .status-pending { color:orange; font-weight:bold; }
-        .status-confirmed { color:green; font-weight:bold; }
-        .status-cancelled { color:red; font-weight:bold; }
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px 20px;
+}
 
-        .msg { margin-bottom:10px; color:green; }
-    </style>
+h2 {
+    margin-bottom: 20px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 14px 22px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideIn 0.5s ease;
+    z-index: 999;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Table */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background: #007bff;
+    color: white;
+    font-weight: 600;
+}
+
+tr:hover {
+    background: #f1f4ff;
+}
+
+/* Status badges */
+.status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.pending { background: #fff3cd; color: #856404; }
+.confirmed { background: #d4edda; color: #155724; }
+.cancelled { background: #f8d7da; color: #721c24; }
+
+/* Cancel button */
+.cancel-btn {
+    color: #e74c3c;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.cancel-btn:hover {
+    text-decoration: underline;
+}
+
+/* Mobile cards */
+@media (max-width: 768px) {
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tr {
+        background: white;
+        margin-bottom: 20px;
+        padding: 18px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+
+    td {
+        border: none;
+        padding: 6px 0;
+    }
+
+    td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #555;
+        display: block;
+    }
+}
+</style>
 </head>
+
 <body>
+
+<?php if (isset($_GET['msg']) && $_GET['msg'] === 'booked'): ?>
+    <div class="toast">Booking successful 🎉</div>
+<?php endif; ?>
 
 <div class="container">
     <h2>My Bookings</h2>
 
-    <?php if (isset($_GET['msg']) && $_GET['msg'] == 'booked'): ?>
-        <p class="msg">Booking successfully created! 🎉</p>
-    <?php endif; ?>
-
     <?php if (count($bookings) === 0): ?>
         <p>You have no bookings yet.</p>
     <?php else: ?>
-        <table>
-            <tr>
-                <th>Package</th>
-                <th>Location</th>
-                <th>Travel Date</th>
-                <th>People</th>
-                <th>Total Amount</th>
-                <th>Status</th>
-                <th>Booked On</th>
-            </tr>
 
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Package</th>
+                    <th>Location</th>
+                    <th>Travel Date</th>
+                    <th>People</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                    <th>Booked On</th>
+                </tr>
+            </thead>
+
+            <tbody>
             <?php foreach ($bookings as $b): ?>
                 <tr>
-                    <td><?php echo $b['title']; ?></td>
-                    <td><?php echo $b['country'] . " - " . $b['city']; ?></td>
-                    <td><?php echo $b['travel_date']; ?></td>
-                    <td><?php echo $b['number_of_people']; ?></td>
-                    <td>$<?php echo $b['total_amount']; ?></td>
-                    <td class="status-<?php echo $b['status']; ?>">
-                    <?php echo ucfirst($b['status']); ?>
-                </td>
+                    <td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
+                    <td data-label="Location"><?= htmlspecialchars($b['country']) ?> - <?= htmlspecialchars($b['city']) ?></td>
+                    <td data-label="Travel Date"><?= $b['travel_date'] ?></td>
+                    <td data-label="People"><?= $b['number_of_people'] ?></td>
+                    <td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
 
-                <td>
-                <?php if ($b['status'] === 'pending'): ?>
-                    <a href="user_cancel_booking.php?id=<?php echo $b['booking_id']; ?>"
-                    onclick="return confirm('Cancel this booking?')"
-                    style="color:red;font-weight:bold;">
-                    Cancel
-                    </a>
-                <?php else: ?>
-                    —
-                <?php endif; ?>
-                </td>
+                    <td data-label="Status">
+                        <span class="status <?= $b['status'] ?>">
+                            <?= ucfirst($b['status']) ?>
+                        </span>
+                    </td>
 
-                    <td><?php echo $b['booking_date']; ?></td>
+                    <td data-label="Action">
+                        <?php if ($b['status'] === 'pending'): ?>
+                            <a class="cancel-btn"
+                               href="user_cancel_booking.php?id=<?= $b['booking_id'] ?>"
+                               onclick="return confirm('Cancel this booking?')">
+                               Cancel
+                            </a>
+                        <?php else: ?>
+                            —
+                        <?php endif; ?>
+                    </td>
+
+                    <td data-label="Booked On"><?= $b['booking_date'] ?></td>
                 </tr>
             <?php endforeach; ?>
-
+            </tbody>
         </table>
+    </div>
+
     <?php endif; ?>
 </div>
 

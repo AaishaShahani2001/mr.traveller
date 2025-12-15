@@ -1,13 +1,13 @@
 <?php
 require "config.php";
 
-if (!isset($_GET['id'])) {
-    die("Destination ID not provided!");
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid destination ID!");
 }
 
-$dest_id = $_GET['id'];
+$dest_id = (int)$_GET['id'];
 
-// Fetch destination
+/* Fetch destination */
 $sql = $conn->prepare("SELECT * FROM destinations WHERE dest_id = ?");
 $sql->execute([$dest_id]);
 $dest = $sql->fetch(PDO::FETCH_ASSOC);
@@ -18,99 +18,194 @@ if (!$dest) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title><?php echo $dest['title']; ?> - Mr.Traveller</title>
+<meta charset="UTF-8">
+<title><?= htmlspecialchars($dest['title']) ?> | Mr.Traveller</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-        body { font-family: Arial; background:#f5f7ff; margin:0; padding:0; }
-        .container { width:90%; margin:auto; padding:30px 0; }
+<style>
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
 
-        .details-box {
-            background:white;
-            padding:20px;
-            border-radius:10px;
-            box-shadow:0 2px 10px rgba(0,0,0,0.1);
-            display:flex;
-            gap:30px;
-        }
+body {
+    margin: 0;
+    background: #f5f7ff;
+}
 
-        .image-box {
-            flex:1;
-        }
-        .image-box img {
-            width:100%;
-            border-radius:10px;
-            height:400px;
-            object-fit:cover;
-        }
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px 20px;
+}
 
-        .info-box {
-            flex:1.2;
-        }
-        h2 { font-size:32px; }
-        .price { font-size:22px; color:#007bff; margin:10px 0; }
-        .duration { font-size:18px; margin-bottom:10px; }
-        .location { font-weight:bold; margin-bottom:15px; }
-        .desc { margin-top:15px; line-height:1.6; }
+.back-link {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #007bff;
+    text-decoration: none;
+    transition: transform 0.3s, color 0.3s;
+}
 
-        .btn-row { margin-top:25px; display:flex; gap:20px; }
+.back-link:hover {
+    color: #005fcc;
+    transform: translateX(-4px);
+}
 
-        .btn {
-            padding:12px 25px;
-            font-size:16px;
-            border-radius:6px;
-            text-decoration:none;
-            font-weight:bold;
-            display:inline-block;
-        }
 
-        .book-btn { background:#007bff; color:white; }
-        .wish-btn { background:#ff4757; color:white; }
+/* Card */
+.details-box {
+    background: white;
+    padding: 24px;
+    border-radius: 18px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
 
-        .book-btn:hover { background:#005fcc; }
-        .wish-btn:hover { background:#d83445; }
+/* Image */
+.image-box {
+    flex: 1;
+}
 
-    </style>
+.image-box img {
+    width: 100%;
+    height: 420px;
+    object-fit: contain;          
+    background: #f1f3ff;
+    border-radius: 16px;
+}
+
+/* Info */
+.info-box {
+    flex: 1.2;
+}
+
+.info-box h2 {
+    font-size: 34px;
+    margin-bottom: 8px;
+}
+
+.location {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 14px;
+}
+
+.price {
+    font-size: 26px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.duration {
+    font-size: 17px;
+    margin-bottom: 12px;
+    color: #444;
+}
+
+.desc {
+    line-height: 1.7;
+    color: #444;
+    margin-top: 15px;
+}
+
+/* Buttons */
+.btn-row {
+    margin-top: 28px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 14px 30px;
+    font-size: 16px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.book-btn {
+    background: #007bff;
+    color: white;
+}
+
+.wish-btn {
+    background: #ff4757;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .details-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .image-box img {
+        height: 300px;
+    }
+
+    .btn-row {
+        justify-content: center;
+    }
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
+    <a href="destinations.php" class="back-link">← Back to Destinations</a>
+
 
     <div class="details-box">
 
         <!-- IMAGE -->
         <div class="image-box">
-            <img src="uploads/<?php echo $dest['image']; ?>" alt="Image">
+            <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="Destination Image">
         </div>
 
         <!-- INFO -->
         <div class="info-box">
 
-            <h2><?php echo $dest['title']; ?></h2>
+            <h2><?= htmlspecialchars($dest['title']) ?></h2>
 
             <p class="location">
-                <?php echo $dest['country']; ?> — <?php echo $dest['city']; ?>
+                <?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?>
             </p>
 
-            <p class="price">$<?php echo $dest['price']; ?></p>
+            <p class="price">$<?= number_format($dest['price'], 2) ?></p>
 
             <p class="duration">
-                Duration: <?php echo $dest['duration']; ?>
+                Duration: <?= htmlspecialchars($dest['duration']) ?>
             </p>
 
             <p class="desc">
-                <?php echo nl2br($dest['description']); ?>
+                <?= nl2br(htmlspecialchars($dest['description'])) ?>
             </p>
 
-            <!-- BUTTONS -->
             <div class="btn-row">
-                <a class="btn book-btn" href="booking.php?id=<?php echo $dest['dest_id']; ?>">
+                <a class="btn book-btn" href="booking.php?id=<?= $dest['dest_id'] ?>">
                     Book Now
                 </a>
 
-                <a class="btn wish-btn" href="wishlist_add.php?id=<?php echo $dest['dest_id']; ?>">
+                <a class="btn wish-btn" href="wishlist_add.php?id=<?= $dest['dest_id'] ?>">
                     Add to Wishlist
                 </a>
             </div>
