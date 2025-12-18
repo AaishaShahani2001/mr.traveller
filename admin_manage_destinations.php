@@ -85,207 +85,157 @@ body { margin:0; background:#f5f6fa; }
 
 .layout { display:flex; min-height:100vh; }
 
-/* ========== SIDEBAR ========== */
+/* ===== SIDEBAR ===== */
 .sidebar {
-    width:250px;
-    background:#1f2937;
-    color:white;
-    padding-top:30px;
-    position:fixed;
-    height:100%;
+    width:250px; background:#1f2937; color:white;
+    padding-top:30px; position:fixed; height:100%;
 }
-.sidebar h2 {
-    text-align:center;
-    margin-bottom:30px;
-}
+.sidebar h2 { text-align:center; margin-bottom:30px; }
 .sidebar a {
-    display:block;
-    padding:14px 22px;
-    color:#e5e7eb;
-    text-decoration:none;
+    display:block; padding:14px 22px;
+    color:#e5e7eb; text-decoration:none;
 }
-.sidebar a:hover,
-.sidebar a.active {
-    background:#2563eb;
-    color:white;
+.sidebar a:hover, .sidebar a.active {
+    background:#2563eb; color:white;
 }
 
-/* ========== MAIN ========== */
-.main {
-    margin-left:250px;
-    padding:24px;
-    width:100%;
-}
+/* ===== MAIN ===== */
+.main { margin-left:250px; padding:24px; width:100%; }
 
 /* Header */
-.header {
-    max-width: 1200px;
-    margin: auto;
-    margin-bottom: 15px;
-}
-.header h2 { margin: 0; }
+.header { max-width:1200px; margin:auto; margin-bottom:15px; }
+.header h2 { margin:0; }
 
 /* Controls */
 .controls {
-    max-width: 1200px;
-    margin: auto;
-    background: white;
-    padding: 14px;
-    border-radius: 14px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    max-width:1200px; margin:auto;
+    background:white; padding:14px;
+    border-radius:14px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.12);
 }
 .controls form {
-    display: grid;
-    grid-template-columns: 1fr 200px auto auto;
-    gap: 10px;
+    display:grid;
+    grid-template-columns:1fr 200px auto auto;
+    gap:10px;
 }
 .controls input, .controls select {
-    padding: 11px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-}
-.controls button, .controls a {
-    padding: 11px 16px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
+    padding:11px; border-radius:10px; border:1px solid #ccc;
 }
 .controls button {
-    background: #007bff;
-    color: white;
+    padding:11px 16px; border-radius:10px;
+    background:#007bff; color:white; border:none; cursor:pointer;
 }
 .controls a {
-    background: #eef3ff;
-    color: #0b3d91;
-    text-decoration: none;
-    text-align: center;
+    padding:11px 16px; border-radius:10px;
+    background:#eef3ff; color:#0b3d91;
+    text-decoration:none; text-align:center;
 }
 
 /* Table */
 .table-box {
-    max-width: 1200px;
-    margin: 18px auto;
-    background: white;
-    border-radius: 14px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    overflow: hidden;
+    max-width:1200px; margin:18px auto;
+    background:white; border-radius:14px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.12);
+    overflow:hidden;
 }
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+table { width:100%; border-collapse:collapse; }
 th {
-    background: #007bff;
-    color: white;
-    padding: 14px;
-    text-align: left;
+    background:#007bff; color:white;
+    padding:14px; text-align:left;
 }
 td {
-    padding: 14px;
-    border-bottom: 1px solid #eee;
+    padding:14px; border-bottom:1px solid #eee;
 }
-tr:hover td { background: #f2f6ff; }
+tr:hover td { background:#f2f6ff; }
 
 img {
-    width: 90px;
-    height: 65px;
-    object-fit: cover;
-    border-radius: 8px;
+    width:90px; height:65px;
+    object-fit:cover; border-radius:8px;
 }
 
-/* Actions */
-.actions {
-    display: flex;
-    gap: 10px;
-}
-.actions a, .actions button {
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: none;
-    cursor: pointer;
-    color: white;
-    font-size: 13px;
-}
-.edit { background: #28a745; }
-.delete { background: #dc3545; }
+/* ===== ACTION BUTTONS ===== */
+.actions { display:flex; gap:8px; }
 
-/* Pagination */
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
+.btn-action {
+    padding:8px 16px;
+    border-radius:999px;
+    border:none;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition:all .3s;
 }
-.pagination a {
-    padding: 9px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    background: white;
-    color: #333;
-    font-weight: bold;
-    border: 1px solid #ddd;
+
+.btn-edit {
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    color:white;
 }
-.pagination a.active {
-    background: #007bff;
-    color: white;
+.btn-edit:hover {
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(34,197,94,.4);
 }
+
+.btn-delete {
+    background:linear-gradient(135deg,#ef4444,#b91c1c);
+    color:white;
+}
+.btn-delete:hover {
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(239,68,68,.4);
+}
+
+/* ===== MODAL ===== */
+.modal-bg {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.6);
+    display:none; align-items:center;
+    justify-content:center;
+    z-index:3000;
+}
+.modal-bg.show { display:flex; }
+
+.modal {
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    max-width:420px; width:100%;
+}
+.modal h3 { margin-top:0; }
+.modal-actions {
+    display:flex; justify-content:flex-end;
+    gap:10px; margin-top:20px;
+}
+.modal-actions button {
+    padding:10px 18px;
+    border-radius:10px;
+    border:none; cursor:pointer;
+    font-weight:bold;
+}
+.btn-cancel { background:#e5e7eb; }
+.btn-confirm { background:#dc3545; color:white; }
 
 /* Toast */
 .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #28a745;
-    color: white;
-    padding: 14px 22px;
-    border-radius: 12px;
-    font-weight: bold;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: .5s;
-    z-index: 9999;
+    position:fixed; top:20px; right:20px;
+    padding:14px 22px; border-radius:12px;
+    color:white; font-weight:bold;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+    opacity:0; transform:translateY(-20px);
+    transition:.5s;
 }
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast.delete { background: #dc3545; }
-
-/* Modal */
-.modal-bg {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: none;
-    justify-content: center;
-    align-items: center;
-}
-.modal-bg.show { display: flex; }
-.modal {
-    background: white;
-    padding: 22px;
-    border-radius: 14px;
-    max-width: 420px;
-    width: 100%;
-}
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.delete { background:#dc3545; }
+.toast.update { background:#28a745; }
 
 /* Responsive */
-@media (max-width: 900px) {
-    .sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-    }
-    .main {
-        margin-left: 0;
-    }
-    .layout {
-        flex-direction: column;
-    }
-    .controls form {
-        grid-template-columns: 1fr;
-    }
-    table thead { display: none; }
-    table, tr, td { display: block; }
+@media(max-width:900px){
+    .sidebar { position:relative; width:100%; }
+    .main { margin-left:0; }
+    .layout { flex-direction:column; }
+    .controls form { grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -349,8 +299,13 @@ img {
     <td>$<?= number_format($d['price'],2) ?></td>
     <td>
         <div class="actions">
-            <a class="edit" href="admin_edit_destination.php?id=<?= $d['dest_id'] ?>">Edit</a>
-            <button class="delete" onclick="openModal('admin_delete_destination.php?id=<?= $d['dest_id'] ?>')">Delete</button>
+            <a class="btn-action btn-edit" href="admin_edit_destination.php?id=<?= $d['dest_id'] ?>">
+                ✏ Edit
+            </a>
+            <button class="btn-action btn-delete"
+                onclick="openDeleteModal('admin_delete_destination.php?id=<?= $d['dest_id'] ?>')">
+                🗑 Delete
+            </button>
         </div>
     </td>
 </tr>
@@ -360,7 +315,7 @@ img {
 </div>
 
 <div class="pagination">
-<?php for ($i=1; $i<=$totalPages; $i++): ?>
+<?php for ($i=1;$i<=$totalPages;$i++): ?>
 <a class="<?= $i==$page?'active':'' ?>" href="?<?= q(['page'=>$i]) ?>"><?= $i ?></a>
 <?php endfor; ?>
 </div>
@@ -368,24 +323,38 @@ img {
 </div>
 </div>
 
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="deleteModal">
+    <div class="modal">
+        <h3>Delete Destination?</h3>
+        <p>This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <a id="deleteLink">
+                <button class="btn-confirm">Yes, Delete</button>
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <?php if ($msg): ?>
-<div class="toast <?= $msg==='deleted'?'delete':'' ?>" id="toast">
-    <?= $msg==='updated' ? 'Destination updated successfully ✔' : 'Destination deleted successfully 🗑' ?>
+<div class="toast <?= $msg==='deleted'?'delete':'update' ?>" id="toast">
+    <?= $msg==='deleted' ? 'Destination deleted successfully 🗑' : 'Destination updated successfully ✔' ?>
 </div>
 <script>
-setTimeout(()=>document.getElementById('toast').classList.add('show'),200);
-setTimeout(()=>document.getElementById('toast').classList.remove('show'),3200);
+setTimeout(()=>toast.classList.add('show'),200);
+setTimeout(()=>toast.classList.remove('show'),3200);
 </script>
 <?php endif; ?>
 
 <script>
-function openModal(url){
+function openDeleteModal(url){
     document.getElementById('deleteLink').href = url;
-    document.getElementById('modal').classList.add('show');
+    document.getElementById('deleteModal').classList.add('show');
 }
-function closeModal(){
-    document.getElementById('modal').classList.remove('show');
+function closeDeleteModal(){
+    document.getElementById('deleteModal').classList.remove('show');
 }
 </script>
 
