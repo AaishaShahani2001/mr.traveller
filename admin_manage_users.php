@@ -61,36 +61,52 @@ function q($arr = []) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* {
-    box-sizing: border-box;
-    font-family: "Segoe UI", Arial, sans-serif;
+* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+body { margin:0; background:#f5f6fa; }
+
+.layout { display:flex; min-height:100vh; }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    width:250px;
+    background:#1f2937;
+    color:white;
+    padding-top:30px;
+    position:fixed;
+    height:100%;
+}
+.sidebar h2 {
+    text-align:center;
+    margin-bottom:30px;
+}
+.sidebar a {
+    display:block;
+    padding:14px 22px;
+    color:#e5e7eb;
+    text-decoration:none;
+}
+.sidebar a:hover,
+.sidebar a.active {
+    background:#2563eb;
+    color:white;
 }
 
-body {
-    background: #f5f6fa;
-    padding: 22px;
+/* ========== MAIN ========== */
+.main {
+    margin-left:250px;
+    padding:24px;
+    width:100%;
 }
 
 /* Header */
 .header {
     max-width: 1100px;
     margin: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
     margin-bottom: 15px;
 }
 .header h2 {
     margin: 0;
     font-size: 24px;
-}
-.back-btn {
-    background: #444;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 8px;
-    text-decoration: none;
 }
 
 /* Controls */
@@ -140,24 +156,20 @@ body {
     box-shadow: 0 12px 30px rgba(0,0,0,0.12);
     overflow: hidden;
 }
-
 table {
     width: 100%;
     border-collapse: collapse;
 }
-
 th {
     background: #34495e;
     color: white;
     padding: 14px;
     text-align: left;
 }
-
 td {
     padding: 14px;
     border-bottom: 1px solid #eee;
 }
-
 tr:hover td {
     background: #f2f6ff;
 }
@@ -202,6 +214,18 @@ tr:hover td {
 
 /* Responsive */
 @media (max-width: 900px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+    .main {
+        margin-left: 0;
+    }
+    .layout {
+        flex-direction: column;
+    }
+
     .controls form {
         grid-template-columns: 1fr;
     }
@@ -232,9 +256,25 @@ tr:hover td {
 
 <body>
 
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin_dashboard.php">📊 Dashboard</a>
+    <a href="admin_manage_destinations.php">📍 Destinations</a>
+    <a href="add_destination.php">➕ Add Destination</a>
+    <a class="active" href="admin_manage_users.php">👤 Users</a>
+    <a href="admin_manage_bookings.php">📅 Bookings</a>
+    <a href="admin_manage_contact.php">📩 Messages</a>
+    <a href="logout.php">🚪 Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
 <div class="header">
     <h2>Manage Users</h2>
-    <a href="admin_dashboard.php" class="back-btn">← Dashboard</a>
 </div>
 
 <div class="controls">
@@ -279,6 +319,9 @@ tr:hover td {
         <?= $i ?>
     </a>
 <?php endfor; ?>
+</div>
+
+</div>
 </div>
 
 </body>
