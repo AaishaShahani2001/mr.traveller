@@ -111,8 +111,6 @@ body { margin:0; background:#f5f6fa; }
 /* ===== MAIN ===== */
 .main { margin-left:250px; padding:24px; width:100%; }
 
-.header h2 { margin-bottom:10px; }
-
 /* ===== FILTERS ===== */
 .filters {
     max-width:1200px;
@@ -183,10 +181,7 @@ tr:hover td { background:#f2f6ff; }
 .cancelled { background:#fdecea; color:#c0392b; }
 
 /* ===== ACTION BUTTONS ===== */
-.actions {
-    display:flex;
-    gap:8px;
-}
+.actions { display:flex; gap:8px; }
 
 .btn-action {
     padding:8px 16px;
@@ -195,12 +190,8 @@ tr:hover td { background:#f2f6ff; }
     font-size:13px;
     font-weight:600;
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:6px;
     transition:all .3s;
 }
-
 .btn-approve {
     background:linear-gradient(135deg,#22c55e,#16a34a);
     color:white;
@@ -209,7 +200,6 @@ tr:hover td { background:#f2f6ff; }
     transform:translateY(-2px);
     box-shadow:0 10px 20px rgba(34,197,94,.4);
 }
-
 .btn-cancel {
     background:linear-gradient(135deg,#ef4444,#b91c1c);
     color:white;
@@ -219,26 +209,41 @@ tr:hover td { background:#f2f6ff; }
     box-shadow:0 10px 20px rgba(239,68,68,.4);
 }
 
-/* ===== PAGINATION ===== */
-.pagination {
-    display:flex;
+/* ===== MODAL ===== */
+.modal-bg {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    display:none;
+    align-items:center;
     justify-content:center;
-    gap:8px;
+    z-index:3000;
+}
+.modal-bg.show { display:flex; }
+.modal {
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+}
+.modal h3 { margin-top:0; }
+.modal p { color:#555; }
+.modal-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
     margin-top:20px;
 }
-.pagination a {
-    padding:9px 12px;
-    border-radius:8px;
-    text-decoration:none;
-    background:white;
-    color:#333;
+.modal-actions button {
+    padding:10px 18px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
     font-weight:bold;
-    border:1px solid #ddd;
 }
-.pagination a.active {
-    background:#007bff;
-    color:white;
-}
+.btn-close { background:#e5e7eb; }
+.btn-confirm { background:#dc3545; color:white; }
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:900px){
@@ -246,14 +251,6 @@ tr:hover td { background:#f2f6ff; }
     .main { margin-left:0; }
     .layout { flex-direction:column; }
     .filters { grid-template-columns:1fr; }
-    table thead { display:none; }
-    table, tr, td { display:block; }
-    td::before {
-        content:attr(data-label);
-        font-weight:bold;
-        display:block;
-        margin-bottom:5px;
-    }
 }
 </style>
 </head>
@@ -276,10 +273,6 @@ tr:hover td { background:#f2f6ff; }
 
 <!-- MAIN -->
 <div class="main">
-
-<div class="header">
-    <h2>Manage Bookings</h2>
-</div>
 
 <div class="filters">
     <div class="status-links">
@@ -323,17 +316,17 @@ tr:hover td { background:#f2f6ff; }
     <th>Action</th>
 </tr>
 </thead>
-
 <tbody>
+
 <?php foreach ($bookings as $b): ?>
 <tr>
-    <td data-label="User"><?= htmlspecialchars($b['full_name']) ?></td>
-    <td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
-    <td data-label="Date"><?= $b['travel_date'] ?></td>
-    <td data-label="People"><?= $b['number_of_people'] ?></td>
-    <td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
-    <td data-label="Status"><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
-    <td data-label="Action">
+    <td><?= htmlspecialchars($b['full_name']) ?></td>
+    <td><?= htmlspecialchars($b['title']) ?></td>
+    <td><?= $b['travel_date'] ?></td>
+    <td><?= $b['number_of_people'] ?></td>
+    <td>$<?= number_format($b['total_amount'],2) ?></td>
+    <td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
+    <td>
         <?php if ($b['status']==='pending'): ?>
         <div class="actions">
             <button class="btn-action btn-approve"
@@ -341,7 +334,7 @@ tr:hover td { background:#f2f6ff; }
                 ✔ Approve
             </button>
             <button class="btn-action btn-cancel"
-                onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled'">
+                onclick="openCancelModal('admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled')">
                 ✖ Cancel
             </button>
         </div>
@@ -350,18 +343,37 @@ tr:hover td { background:#f2f6ff; }
     </td>
 </tr>
 <?php endforeach; ?>
+
 </tbody>
 </table>
 </div>
 
-<div class="pagination">
-<?php for($i=1;$i<=$totalPages;$i++): ?>
-    <a class="<?= $i==$page?'active':'' ?>" href="?<?= q(['page'=>$i]) ?>"><?= $i ?></a>
-<?php endfor; ?>
+</div>
 </div>
 
+<!-- CANCEL MODAL -->
+<div class="modal-bg" id="cancelModal">
+    <div class="modal">
+        <h3>Cancel Booking?</h3>
+        <p>This action cannot be undone. Are you sure you want to cancel this booking?</p>
+        <div class="modal-actions">
+            <button class="btn-close" onclick="closeCancelModal()">No</button>
+            <a id="cancelLink">
+                <button class="btn-confirm">Yes, Cancel</button>
+            </a>
+        </div>
+    </div>
 </div>
-</div>
+
+<script>
+function openCancelModal(url){
+    document.getElementById('cancelLink').href = url;
+    document.getElementById('cancelModal').classList.add('show');
+}
+function closeCancelModal(){
+    document.getElementById('cancelModal').classList.remove('show');
+}
+</script>
 
 </body>
 </html>
