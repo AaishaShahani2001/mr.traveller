@@ -152,9 +152,10 @@ th { text-align:left; color:#555; }
     <h2>Admin Panel</h2>
     <a class="active" href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
+    <a href="add_destination.php">➕ Add Destination</a>
     <a href="admin_manage_users.php">👤 Users</a>
     <a href="admin_manage_bookings.php">📅 Bookings</a>
-    <a href="add_destination.php">➕ Add Destination</a>
+    <a href="admin_manage_contact.php">📩 Messages</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
 
