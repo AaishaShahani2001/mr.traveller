@@ -71,10 +71,32 @@ body {
     background: #f5f7ff;
 }
 
-/* Header */
+/* ================= BACK TO HOME ================= */
+.back-home-btn {
+    position: fixed;
+    top: 50px;
+    left: 60px;
+    z-index: 1000;
+    padding: 10px 16px;
+    background: #ffffff;
+    color: #007bff;
+    border-radius: 30px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+}
+
+.back-home-btn:hover {
+    background: #007bff;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* ================= HEADER ================= */
 .page-title {
     text-align: center;
-    padding: 50px 20px 20px;
+    padding: 80px 20px 20px;
 }
 .page-title h2 {
     font-size: 34px;
@@ -84,28 +106,30 @@ body {
     color: #555;
 }
 
-/* Filters */
+/* ================= FILTERS ================= */
 .filters {
     max-width: 1100px;
     margin: auto;
     background: white;
-    padding: 18px;
-    border-radius: 16px;
+    padding: 20px;
+    border-radius: 18px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    display: grid;
-    grid-template-columns: 1fr 200px auto;
-    gap: 12px;
 }
 
-.filters input,
-.filters select {
+.filters form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 14px;
+}
+
+.filters input {
     padding: 12px;
     border-radius: 12px;
     border: 1px solid #ccc;
 }
 
 .filters button {
-    padding: 12px 22px;
+    padding: 12px 26px;
     background: #007bff;
     color: white;
     border: none;
@@ -113,7 +137,23 @@ body {
     cursor: pointer;
 }
 
-/* Grid */
+/* Price range */
+.price-range {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.price-range label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.price-range input[type=range] {
+    width: 100%;
+}
+
+/* ================= GRID ================= */
 .grid {
     max-width: 1200px;
     margin: 50px auto;
@@ -174,19 +214,15 @@ body {
     color: white;
     border-radius: 30px;
     text-decoration: none;
-    transition: transform 0.3s;
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-}
-
-/* Pagination */
+/* ================= PAGINATION ================= */
 .pagination {
     display: flex;
     justify-content: center;
     gap: 10px;
     margin-bottom: 60px;
+    flex-wrap: wrap;
 }
 
 .pagination a {
@@ -204,16 +240,39 @@ body {
     color: white;
 }
 
-/* Responsive */
+/* ================= RESPONSIVE ================= */
 @media (max-width: 900px) {
-    .filters {
+    .filters form {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-title h2 {
+        font-size: 26px;
+    }
+
+    .card img {
+        height: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-title h2 {
+        font-size: 22px;
+    }
+
+    .back-home-btn {
+        font-size: 14px;
+        padding: 8px 14px;
     }
 }
 </style>
 </head>
 
 <body>
+
+<a href="home.php" class="back-home-btn">← Home</a>
 
 <div class="page-title">
     <h2>Explore Our Travel Packages</h2>
@@ -222,15 +281,27 @@ body {
 
 <div class="filters">
 <form>
-    <input type="text" name="search" placeholder="Search destination, country or city"
-           value="<?= htmlspecialchars($search) ?>">
+    <input
+        type="text"
+        name="search"
+        placeholder="Search destination, country or city"
+        value="<?= htmlspecialchars($search) ?>"
+    >
 
-    <select name="price">
-        <option value="">Max Price</option>
-        <option value="500" <?= $maxPrice=='500'?'selected':'' ?>>$500</option>
-        <option value="1000" <?= $maxPrice=='1000'?'selected':'' ?>>$1000</option>
-        <option value="2000" <?= $maxPrice=='2000'?'selected':'' ?>>$2000</option>
-    </select>
+    <div class="price-range">
+        <label>
+            Max Price: $<span id="priceValue"><?= $maxPrice ?: 2000 ?></span>
+        </label>
+        <input
+            type="range"
+            name="price"
+            min="100"
+            max="5000"
+            step="100"
+            value="<?= $maxPrice ?: 2000 ?>"
+            oninput="priceValue.textContent=this.value"
+        >
+    </div>
 
     <button>Search</button>
 </form>
@@ -244,7 +315,6 @@ body {
 <?php foreach ($destinations as $dest): ?>
 <div class="card">
     <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="Destination">
-
     <div class="card-body">
         <h3><?= htmlspecialchars($dest['title']) ?></h3>
         <p><?= htmlspecialchars($dest['country']) ?> - <?= htmlspecialchars($dest['city']) ?></p>
