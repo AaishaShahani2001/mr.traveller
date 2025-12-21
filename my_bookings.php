@@ -33,137 +33,166 @@ $bookings = $sql->fetchAll(PDO::FETCH_ASSOC);
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+* { box-sizing:border-box; font-family:"Segoe UI", Arial, sans-serif; }
 body { margin:0; background:#f5f7ff; }
 
 .container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 40px 20px;
+    max-width:1200px;
+    margin:auto;
+    padding:40px 20px;
 }
 
-h2 { margin-bottom: 20px; }
-
-/* Back button */
 .back-btn {
-    display: inline-block;
-    margin-bottom: 20px;
-    color: #007bff;
-    font-weight: bold;
-    text-decoration: none;
+    display:inline-block;
+    margin-bottom:20px;
+    color:#007bff;
+    font-weight:bold;
+    text-decoration:none;
 }
 
-/* Toast */
+/* ===== TOAST ===== */
 .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #2ecc71;
-    color: white;
-    padding: 14px 22px;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    z-index: 999;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: .5s;
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#2ecc71;
+    color:white;
+    padding:14px 22px;
+    border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    opacity:0;
+    transform:translateY(-20px);
+    transition:.5s;
+    z-index:9999;
 }
-.toast.show { opacity: 1; transform: translateY(0); }
+.toast.show { opacity:1; transform:translateY(0); }
 
-/* Table */
+/* ===== TABLE ===== */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-    border-radius: 14px;
-    overflow: hidden;
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 15px 40px rgba(0,0,0,0.12);
 }
 
 th, td {
-    padding: 14px;
-    border-bottom: 1px solid #eee;
+    padding:14px;
+    border-bottom:1px solid #eee;
+    white-space: nowrap; /* 🔑 keep in one line */
 }
 
 th {
-    background: #007bff;
-    color: white;
+    background:#007bff;
+    color:white;
 }
 
+/* Fixed column widths */
+td:nth-child(3),
+td:nth-child(4) {
+    width:120px;
+    text-align:center;
+}
+
+/* ===== STATUS ===== */
 .status {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-weight: bold;
+    padding:6px 16px;
+    border-radius:999px;
+    font-weight:bold;
+    font-size:14px;
+    display:inline-block;
 }
 .pending { background:#fff3cd; color:#856404; }
 .confirmed { background:#d4edda; color:#155724; }
 .cancelled { background:#f8d7da; color:#721c24; }
 
+/* ===== ACTIONS ===== */
+.actions {
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
 .action-btn {
-    margin-right: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-    background: none;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:bold;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border:none;
+    cursor:pointer;
 }
 
-.cancel-btn { color:#e74c3c; }
-.invoice-btn { color:#007bff; }
+/* Buttons */
+.edit-btn {
+    background:#e8f0ff;
+    color:#005fcc;
+}
+.edit-btn:hover { background:#d6e4ff; }
 
-/* Modal */
+.cancel-btn {
+    background:#fdecea;
+    color:#c0392b;
+}
+.cancel-btn:hover { background:#fadbd8; }
+
+.invoice-btn {
+    background:#eef3ff;
+    color:#2c3e50;
+}
+.invoice-btn:hover { background:#dfe7ff; }
+
+/* ===== MODAL ===== */
 .modal-bg {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: none;
-    justify-content: center;
-    align-items: center;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    justify-content:center;
+    align-items:center;
 }
-.modal-bg.show { display: flex; }
+.modal-bg.show { display:flex; }
 
 .modal {
-    background: white;
-    padding: 22px;
-    border-radius: 14px;
-    max-width: 420px;
-    width: 100%;
+    background:white;
+    padding:22px;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+}
+.modal-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
 }
 .modal button {
-    padding: 10px 16px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
+    padding:10px 16px;
+    border-radius:10px;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
 }
-.btn-cancel { background:#e9ecef; }
+.btn-close { background:#e9ecef; }
 .btn-confirm { background:#dc3545; color:white; }
 
-/* Responsive */
-@media(max-width:768px){
-    table, thead, tbody, th, td, tr { display:block; }
-    thead { display:none; }
-    tr {
-        background:white;
-        margin-bottom:20px;
-        padding:18px;
-        border-radius:16px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.12);
-    }
-    td { border:none; padding:6px 0; }
-    td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        display:block;
-        color:#555;
-    }
+/* ===== MOBILE ===== */
+@media(max-width:900px){
+    table { font-size:14px; }
 }
 </style>
 </head>
 
 <body>
 
-<?php if (isset($_GET['msg']) && $_GET['msg'] === 'booked'): ?>
-<div class="toast" id="toast">Booking successful 🎉</div>
+<!-- ===== SUCCESS TOAST ===== -->
+<?php if (isset($_GET['msg'])): ?>
+<div class="toast" id="toast">
+    <?= $_GET['msg']==='updated' ? 'Booking updated successfully ✅' : 'Booking successful 🎉' ?>
+</div>
 <script>
 const toast = document.getElementById("toast");
 setTimeout(()=>toast.classList.add("show"),200);
@@ -174,7 +203,6 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <div class="container">
 
 <a href="home.php" class="back-btn">← Back to Home</a>
-
 <h2>My Bookings</h2>
 
 <?php if (!$bookings): ?>
@@ -199,29 +227,38 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <tbody>
 <?php foreach ($bookings as $b): ?>
 <tr>
-<td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
-<td data-label="Location"><?= htmlspecialchars($b['country']) ?> - <?= htmlspecialchars($b['city']) ?></td>
-<td data-label="Check-in"><?= $b['check_in'] ?></td>
-<td data-label="Check-out"><?= $b['check_out'] ?></td>
-<td data-label="Nights"><?= $b['nights'] ?></td>
-<td data-label="People"><?= $b['number_of_people'] ?></td>
-<td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
-<td data-label="Status">
-    <span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span>
+<td><?= htmlspecialchars($b['title']) ?></td>
+<td><?= htmlspecialchars($b['country']) ?> – <?= htmlspecialchars($b['city']) ?></td>
+<td><?= $b['check_in'] ?></td>
+<td><?= $b['check_out'] ?></td>
+<td><?= $b['nights'] ?></td>
+<td><?= $b['number_of_people'] ?></td>
+<td>$<?= number_format($b['total_amount'],2) ?></td>
+<td>
+    <span class="status <?= $b['status'] ?>">
+        <?= ucfirst($b['status']) ?>
+    </span>
 </td>
-<td data-label="Actions">
-    <a class="action-btn invoice-btn"
-       href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
-       target="_blank">
-       Invoice
-    </a>
+<td>
+    <div class="actions">
+        <a class="action-btn edit-btn"
+           href="user_update_booking.php?id=<?= $b['booking_id'] ?>">
+           ✏️ Edit
+        </a>
 
-    <?php if ($b['status'] === 'pending'): ?>
+        <?php if ($b['status'] === 'pending'): ?>
         <button class="action-btn cancel-btn"
             onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">
-            Cancel
+            ❌ Cancel
         </button>
-    <?php endif; ?>
+        <?php endif; ?>
+
+        <a class="action-btn invoice-btn"
+           href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
+           target="_blank">
+           🧾 Invoice
+        </a>
+    </div>
 </td>
 </tr>
 <?php endforeach; ?>
@@ -231,14 +268,16 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <?php endif; ?>
 </div>
 
-<!-- Cancel Modal -->
+<!-- ===== CANCEL MODAL ===== -->
 <div class="modal-bg" id="modal">
     <div class="modal">
         <h3>Cancel Booking</h3>
         <p>Are you sure you want to cancel this booking?</p>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button class="btn-cancel" onclick="closeModal()">No</button>
-            <a id="cancelLink"><button class="btn-confirm">Yes, Cancel</button></a>
+        <div class="modal-actions">
+            <button class="btn-close" onclick="closeModal()">No</button>
+            <a id="cancelLink">
+                <button class="btn-confirm">Yes, Cancel</button>
+            </a>
         </div>
     </div>
 </div>
