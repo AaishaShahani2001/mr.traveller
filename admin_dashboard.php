@@ -4,7 +4,7 @@ require "config.php";
 
 /* ---------- Admin Protection ---------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: auth.php");
     exit;
 }
 
@@ -153,6 +153,8 @@ th { text-align:left; color:#555; }
     <a class="active" href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
     <a href="add_destination.php">➕ Add Destination</a>
+    <a href="add_hotel.php">➕ Add Accommodation</a>
+    <a href="add_travel_facility.php">➕ Add Travel-Facility</a>
     <a href="admin_manage_users.php">👤 Users</a>
     <a href="admin_manage_bookings.php">📅 Bookings</a>
     <a href="admin_manage_contact.php">📩 Messages</a>
