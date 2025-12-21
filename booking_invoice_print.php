@@ -6,15 +6,21 @@ if (!isset($_SESSION['user_id'])) {
     die("Unauthorized access");
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("Invalid booking");
 }
 
-$booking_id = $_GET['id'];
+$booking_id = (int)$_GET['id'];
 
 $sql = $conn->prepare("
-    SELECT b.*, u.full_name, u.email,
-           d.title, d.country, d.city
+    SELECT 
+        b.*, 
+        u.full_name, 
+        u.email,
+        d.title, 
+        d.country, 
+        d.city,
+        DATEDIFF(b.check_out, b.check_in) AS nights
     FROM bookings b
     JOIN users u ON b.user_id = u.user_id
     JOIN destinations d ON b.dest_id = d.dest_id
@@ -29,9 +35,10 @@ if (!$b) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Invoice - Mr.Traveller</title>
+<meta charset="UTF-8">
+<title>Invoice | Mr.Traveller</title>
 
 <style>
 body {
@@ -106,36 +113,40 @@ th {
             <p>Email: support@mrtraveller.com</p>
         </div>
         <div>
-            <p><b>Invoice Date:</b> <?php echo date("Y-m-d"); ?></p>
-            <p><b>Booking ID:</b> <?php echo $b['booking_id']; ?></p>
+            <p><b>Invoice Date:</b> <?= date("Y-m-d"); ?></p>
+            <p><b>Booking ID:</b> <?= $b['booking_id']; ?></p>
         </div>
     </div>
 
     <p>
-        <b>Customer:</b> <?php echo htmlspecialchars($b['full_name']); ?><br>
-        <b>Email:</b> <?php echo htmlspecialchars($b['email']); ?>
+        <b>Customer:</b> <?= htmlspecialchars($b['full_name']); ?><br>
+        <b>Email:</b> <?= htmlspecialchars($b['email']); ?>
     </p>
 
     <table>
         <tr>
             <th>Package</th>
             <th>Destination</th>
-            <th>Travel Date</th>
+            <th>Check-in</th>
+            <th>Check-out</th>
+            <th>Nights</th>
             <th>People</th>
-            <th>Price</th>
+            <th>Total</th>
         </tr>
 
         <tr>
-            <td><?php echo $b['title']; ?></td>
-            <td><?php echo $b['country']." - ".$b['city']; ?></td>
-            <td><?php echo $b['travel_date']; ?></td>
-            <td><?php echo $b['number_of_people']; ?></td>
-            <td>$<?php echo number_format($b['total_amount'], 2); ?></td>
+            <td><?= htmlspecialchars($b['title']); ?></td>
+            <td><?= htmlspecialchars($b['country']." - ".$b['city']); ?></td>
+            <td><?= $b['check_in']; ?></td>
+            <td><?= $b['check_out']; ?></td>
+            <td><?= $b['nights']; ?></td>
+            <td><?= $b['number_of_people']; ?></td>
+            <td>$<?= number_format($b['total_amount'], 2); ?></td>
         </tr>
     </table>
 
     <p class="total">
-        Total Amount: $<?php echo number_format($b['total_amount'], 2); ?>
+        Total Amount: $<?= number_format($b['total_amount'], 2); ?>
     </p>
 
     <div class="footer">
@@ -145,7 +156,9 @@ th {
 
     <br>
 
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button class="print-btn" onclick="window.print()">
+        🖨️ Print / Save as PDF
+    </button>
 
 </div>
 

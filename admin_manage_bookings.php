@@ -64,7 +64,11 @@ $offset = ($page - 1) * $perPage;
 
 /* ---------- Fetch ---------- */
 $sql = "
-SELECT b.*, u.full_name, d.title
+SELECT 
+    b.*, 
+    u.full_name, 
+    d.title,
+    DATEDIFF(b.check_out, b.check_in) AS nights
 FROM bookings b
 JOIN users u ON b.user_id = u.user_id
 JOIN destinations d ON b.dest_id = d.dest_id
@@ -91,10 +95,9 @@ function q($arr = []) {
 <style>
 * { box-sizing:border-box; font-family:"Segoe UI", Arial, sans-serif; }
 body { margin:0; background:#f5f6fa; }
-
 .layout { display:flex; min-height:100vh; }
 
-/* ===== SIDEBAR ===== */
+/* Sidebar */
 .sidebar {
     width:250px; background:#1f2937; color:white;
     padding-top:30px; position:fixed; height:100%;
@@ -108,10 +111,10 @@ body { margin:0; background:#f5f6fa; }
     background:#2563eb; color:white;
 }
 
-/* ===== MAIN ===== */
+/* Main */
 .main { margin-left:250px; padding:24px; width:100%; }
 
-/* ===== FILTERS ===== */
+/* Filters */
 .filters {
     max-width:1200px;
     margin:auto;
@@ -152,7 +155,7 @@ body { margin:0; background:#f5f6fa; }
     cursor:pointer;
 }
 
-/* ===== TABLE ===== */
+/* Table */
 .table-box {
     max-width:1200px;
     margin:18px auto;
@@ -167,49 +170,30 @@ th {
     padding:14px; text-align:left;
 }
 td { padding:14px; border-bottom:1px solid #eee; }
-tr:hover td { background:#f2f6ff; }
 
-/* ===== STATUS ===== */
+/* Status */
 .status {
     font-weight:bold;
     padding:6px 14px;
     border-radius:20px;
-    font-size:13px;
 }
 .pending { background:#fff3cd; color:#856404; }
 .confirmed { background:#e9f9ee; color:#2e7d32; }
 .cancelled { background:#fdecea; color:#c0392b; }
 
-/* ===== ACTION BUTTONS ===== */
+/* Actions */
 .actions { display:flex; gap:8px; }
-
 .btn-action {
     padding:8px 16px;
     border-radius:999px;
     border:none;
-    font-size:13px;
     font-weight:600;
     cursor:pointer;
-    transition:all .3s;
 }
-.btn-approve {
-    background:linear-gradient(135deg,#22c55e,#16a34a);
-    color:white;
-}
-.btn-approve:hover {
-    transform:translateY(-2px);
-    box-shadow:0 10px 20px rgba(34,197,94,.4);
-}
-.btn-cancel {
-    background:linear-gradient(135deg,#ef4444,#b91c1c);
-    color:white;
-}
-.btn-cancel:hover {
-    transform:translateY(-2px);
-    box-shadow:0 10px 20px rgba(239,68,68,.4);
-}
+.btn-approve { background:#22c55e; color:white; }
+.btn-cancel { background:#ef4444; color:white; }
 
-/* ===== MODAL ===== */
+/* Modal */
 .modal-bg {
     position:fixed;
     inset:0;
@@ -217,7 +201,6 @@ tr:hover td { background:#f2f6ff; }
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:3000;
 }
 .modal-bg.show { display:flex; }
 .modal {
@@ -227,30 +210,17 @@ tr:hover td { background:#f2f6ff; }
     max-width:420px;
     width:100%;
 }
-.modal h3 { margin-top:0; }
-.modal p { color:#555; }
 .modal-actions {
     display:flex;
     justify-content:flex-end;
     gap:10px;
-    margin-top:20px;
 }
-.modal-actions button {
-    padding:10px 18px;
-    border-radius:10px;
-    border:none;
-    cursor:pointer;
-    font-weight:bold;
-}
-.btn-close { background:#e5e7eb; }
-.btn-confirm { background:#dc3545; color:white; }
 
-/* ===== RESPONSIVE ===== */
+/* Responsive */
 @media(max-width:900px){
     .sidebar { position:relative; width:100%; }
     .main { margin-left:0; }
     .layout { flex-direction:column; }
-    .filters { grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -309,20 +279,24 @@ tr:hover td { background:#f2f6ff; }
 <tr>
     <th>User</th>
     <th>Package</th>
-    <th>Date</th>
+    <th>Check-in</th>
+    <th>Check-out</th>
+    <th>Nights</th>
     <th>People</th>
     <th>Total</th>
     <th>Status</th>
     <th>Action</th>
 </tr>
 </thead>
-<tbody>
 
+<tbody>
 <?php foreach ($bookings as $b): ?>
 <tr>
     <td><?= htmlspecialchars($b['full_name']) ?></td>
     <td><?= htmlspecialchars($b['title']) ?></td>
-    <td><?= $b['travel_date'] ?></td>
+    <td><?= $b['check_in'] ?></td>
+    <td><?= $b['check_out'] ?></td>
+    <td><?= $b['nights'] ?></td>
     <td><?= $b['number_of_people'] ?></td>
     <td>$<?= number_format($b['total_amount'],2) ?></td>
     <td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
@@ -343,7 +317,6 @@ tr:hover td { background:#f2f6ff; }
     </td>
 </tr>
 <?php endforeach; ?>
-
 </tbody>
 </table>
 </div>
@@ -355,12 +328,10 @@ tr:hover td { background:#f2f6ff; }
 <div class="modal-bg" id="cancelModal">
     <div class="modal">
         <h3>Cancel Booking?</h3>
-        <p>This action cannot be undone. Are you sure you want to cancel this booking?</p>
+        <p>This action cannot be undone.</p>
         <div class="modal-actions">
-            <button class="btn-close" onclick="closeCancelModal()">No</button>
-            <a id="cancelLink">
-                <button class="btn-confirm">Yes, Cancel</button>
-            </a>
+            <button onclick="closeCancelModal()">No</button>
+            <a id="cancelLink"><button class="btn-cancel">Yes, Cancel</button></a>
         </div>
     </div>
 </div>

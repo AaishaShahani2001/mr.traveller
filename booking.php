@@ -29,33 +29,83 @@ $error_msg = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $travel_date = $_POST['travel_date'];
-    $number_of_people = (int)$_POST['number_of_people'];
+    $check_in  = $_POST['check_in'] ?? '';
+    $check_out = $_POST['check_out'] ?? '';
+    $number_of_people = (int)($_POST['number_of_people'] ?? 0);
+
+    $today = date('Y-m-d');
 
     if ($number_of_people < 1) {
         $error_msg = "Number of people must be at least 1.";
-    } else {
-        $user_id = $_SESSION['user_id'];
-        $booking_date = date('Y-m-d');
-        $total_amount = $dest['price'] * $number_of_people;
+    }
+    elseif (!$check_in || !$check_out) {
+        $error_msg = "Please select check-in and check-out dates.";
+    }
+    elseif ($check_in < $today) {
+        $error_msg = "Check-in date cannot be in the past.";
+    }
+    elseif ($check_out <= $check_in) {
+        $error_msg = "Check-out date must be after check-in date.";
+    }
+    else {
 
-        $stmt = $conn->prepare("
-            INSERT INTO bookings
-            (user_id, dest_id, booking_date, travel_date, number_of_people, total_amount, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        /* ---------- Overlap check ---------- */
+        $overlapStmt = $conn->prepare("
+            SELECT COUNT(*)
+            FROM bookings
+            WHERE dest_id = ?
+              AND status IN ('pending','confirmed')
+              AND check_in < ?
+              AND check_out > ?
         ");
 
-        $stmt->execute([
-            $user_id,
+        $overlapStmt->execute([
             $dest_id,
-            $booking_date,
-            $travel_date,
-            $number_of_people,
-            $total_amount
+            $check_out,
+            $check_in
         ]);
 
-        header("Location: my_bookings.php?msg=booked");
-        exit;
+        $overlaps = $overlapStmt->fetchColumn();
+
+        if ($overlaps > 0) {
+            $error_msg = "❌ This destination is already booked for selected dates.";
+        } else {
+
+            $user_id = $_SESSION['user_id'];
+            $booking_date = date('Y-m-d');
+
+            /* ---------- Calculate nights ---------- */
+            $start = new DateTime($check_in);
+            $end   = new DateTime($check_out);
+            $nights = $start->diff($end)->days;
+
+            if ($nights < 1) {
+                $error_msg = "Invalid booking duration.";
+            } else {
+
+                /* ---------- Total amount ---------- */
+                $total_amount = $dest['price'] * $number_of_people * $nights;
+
+                $stmt = $conn->prepare("
+                    INSERT INTO bookings
+                    (user_id, dest_id, booking_date, check_in, check_out, number_of_people, total_amount, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                ");
+
+                $stmt->execute([
+                    $user_id,
+                    $dest_id,
+                    $booking_date,
+                    $check_in,
+                    $check_out,
+                    $number_of_people,
+                    $total_amount
+                ]);
+
+                header("Location: my_bookings.php?msg=booked");
+                exit;
+            }
+        }
     }
 }
 ?>
@@ -68,24 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* {
-    box-sizing: border-box;
-    font-family: "Segoe UI", Arial, sans-serif;
-}
+* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+body { margin: 0; background: #f5f7ff; }
 
-body {
-    margin: 0;
-    background: #f5f7ff;
-}
+.container { max-width: 1200px; margin: auto; padding: 40px 20px; }
 
-/* Container */
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 40px 20px;
-}
-
-/* Back link */
 .back-link {
     display: inline-block;
     margin-bottom: 18px;
@@ -93,14 +130,8 @@ body {
     font-weight: 600;
     color: #007bff;
     text-decoration: none;
-    transition: transform 0.3s, color 0.3s;
-}
-.back-link:hover {
-    color: #005fcc;
-    transform: translateX(-4px);
 }
 
-/* Card */
 .booking-box {
     background: white;
     padding: 24px;
@@ -111,48 +142,18 @@ body {
     align-items: center;
 }
 
-/* Image */
-.image-box {
-    flex: 1;
-}
+.image-box { flex: 1; }
 
 .image-box img {
     width: 100%;
     height: 380px;
-    object-fit: contain;        /* ✅ no crop */
+    object-fit: contain;
     background: #f1f3ff;
     border-radius: 16px;
 }
 
-/* Form */
-.form-box {
-    flex: 1.2;
-}
+.form-box { flex: 1.2; }
 
-.form-box h2 {
-    font-size: 32px;
-    margin-bottom: 6px;
-}
-
-.location {
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 10px;
-}
-
-.price {
-    font-size: 22px;
-    color: #007bff;
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.duration {
-    margin-bottom: 18px;
-    color: #444;
-}
-
-/* Form fields */
 label {
     display: block;
     margin-top: 14px;
@@ -165,12 +166,11 @@ input {
     margin-top: 6px;
     border-radius: 10px;
     border: 1px solid #ccc;
-    font-size: 15px;
 }
 
 button {
     width: 100%;
-    margin-top: 20px;
+    margin-top: 22px;
     padding: 14px;
     border-radius: 30px;
     border: none;
@@ -179,31 +179,18 @@ button {
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-button:hover {
-    background: #005fcc;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-}
-
-/* Error */
 .error {
     margin-top: 15px;
     color: #c0392b;
     font-weight: 600;
 }
 
-/* Responsive */
 @media (max-width: 900px) {
     .booking-box {
         flex-direction: column;
         text-align: center;
-    }
-
-    .image-box img {
-        height: 300px;
     }
 }
 </style>
@@ -213,45 +200,41 @@ button:hover {
 
 <div class="container">
 
-    <a href="view_destination.php?id=<?= $dest['dest_id'] ?>" class="back-link">
-        ← Back to Destination
-    </a>
+<a href="view_destination.php?id=<?= $dest['dest_id'] ?>" class="back-link">
+← Back to Destination
+</a>
 
-    <div class="booking-box">
+<div class="booking-box">
 
-        <!-- IMAGE -->
-        <div class="image-box">
-            <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="Destination">
-        </div>
+<div class="image-box">
+    <img src="uploads/<?= htmlspecialchars($dest['image']) ?>">
+</div>
 
-        <!-- FORM -->
-        <div class="form-box">
-            <h2><?= htmlspecialchars($dest['title']) ?></h2>
+<div class="form-box">
+    <h2><?= htmlspecialchars($dest['title']) ?></h2>
+    <p><?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?></p>
+    <p><strong>$<?= number_format($dest['price'],2) ?></strong> per person / per night</p>
 
-            <p class="location">
-                <?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?>
-            </p>
+    <form method="POST">
 
-            <p class="price">$<?= number_format($dest['price'],2) ?> per person</p>
-            <p class="duration">Duration: <?= htmlspecialchars($dest['duration']) ?></p>
+        <label>Check-in Date</label>
+        <input type="date" name="check_in" min="<?= date('Y-m-d') ?>" required>
 
-            <form method="POST">
-                <label>Travel Date</label>
-                <input type="date" name="travel_date" required>
+        <label>Check-out Date</label>
+        <input type="date" name="check_out" min="<?= date('Y-m-d') ?>" required>
 
-                <label>Number of People</label>
-                <input type="number" name="number_of_people" value="1" min="1" required>
+        <label>Number of People</label>
+        <input type="number" name="number_of_people" value="1" min="1" required>
 
-                <button type="submit">Confirm Booking</button>
-            </form>
+        <button type="submit">Confirm Booking</button>
+    </form>
 
-            <?php if (!empty($error_msg)): ?>
-                <p class="error"><?= htmlspecialchars($error_msg) ?></p>
-            <?php endif; ?>
-        </div>
+    <?php if ($error_msg): ?>
+        <p class="error"><?= htmlspecialchars($error_msg) ?></p>
+    <?php endif; ?>
 
-    </div>
-
+</div>
+</div>
 </div>
 
 </body>

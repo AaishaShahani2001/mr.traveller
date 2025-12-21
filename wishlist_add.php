@@ -12,48 +12,34 @@ if (
     header("Content-Type: application/json");
 
     if (!isset($_SESSION['user_id'])) {
-        echo json_encode([
-            "status" => "error",
-            "message" => "Please login first"
-        ]);
+        echo json_encode(["status"=>"error","message"=>"Please login first"]);
         exit;
     }
 
     if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-        echo json_encode([
-            "status" => "error",
-            "message" => "Invalid destination"
-        ]);
+        echo json_encode(["status"=>"error","message"=>"Invalid destination"]);
         exit;
     }
 
     $user_id = $_SESSION['user_id'];
     $dest_id = (int)$_GET['id'];
 
-    /* Check if already in wishlist */
     $check = $conn->prepare(
         "SELECT 1 FROM wishlist WHERE user_id=? AND dest_id=?"
     );
     $check->execute([$user_id, $dest_id]);
 
     if ($check->rowCount() > 0) {
-        echo json_encode([
-            "status" => "info",
-            "message" => "Already in your wishlist ❤️"
-        ]);
+        echo json_encode(["status"=>"info","message"=>"Already in your wishlist ❤️"]);
         exit;
     }
 
-    /* Insert */
     $insert = $conn->prepare(
         "INSERT INTO wishlist (user_id, dest_id) VALUES (?, ?)"
     );
     $insert->execute([$user_id, $dest_id]);
 
-    echo json_encode([
-        "status" => "success",
-        "message" => "Added to wishlist ❤️"
-    ]);
+    echo json_encode(["status"=>"success","message"=>"Added to wishlist ❤️"]);
     exit;
 }
 
@@ -68,7 +54,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-/* Fetch wishlist */
 $sql = $conn->prepare("
     SELECT d.dest_id, d.title, d.country, d.city, d.price, d.image
     FROM wishlist w
@@ -124,58 +109,89 @@ body {
 /* Grid */
 .grid {
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-    gap:24px;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:30px;
 }
 
-/* Card */
+/* ===== NEW CARD DESIGN ===== */
 .card {
     background:white;
-    border-radius:18px;
+    border-radius:22px;
     overflow:hidden;
-    box-shadow:0 14px 35px rgba(0,0,0,.15);
+    box-shadow:0 18px 45px rgba(0,0,0,.18);
+    transition:.35s;
+}
+.card:hover {
+    transform:translateY(-8px);
+    box-shadow:0 28px 60px rgba(0,0,0,.25);
 }
 
-.card img {
+/* Image */
+.card-img {
+    position:relative;
+    height:220px;
+}
+.card-img img {
     width:100%;
-    height:190px;
+    height:100%;
     object-fit:cover;
 }
 
+/* Overlay */
+.card-img::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,.55), transparent);
+}
+
+/* Body */
 .card-body {
-    padding:18px;
+    padding:22px;
     text-align:center;
 }
 
+.card-body h3 {
+    margin:6px 0;
+    font-size:22px;
+}
+
+.location {
+    font-size:14px;
+    color:#666;
+}
+
 .price {
-    font-size:18px;
+    margin:14px 0;
+    font-size:20px;
     font-weight:bold;
     color:#007bff;
-    margin:8px 0 14px;
 }
 
 /* Buttons */
 .actions {
     display:flex;
-    gap:10px;
+    gap:12px;
     justify-content:center;
 }
 
 .view-btn {
-    padding:10px 22px;
+    padding:10px 26px;
     background:#007bff;
     color:white;
     border-radius:30px;
     text-decoration:none;
+    font-weight:600;
 }
 
 .remove-btn {
-    padding:10px 22px;
+    padding:10px 26px;
     background:#dc3545;
     color:white;
     border-radius:30px;
     border:none;
     cursor:pointer;
+    font-weight:600;
 }
 
 /* Empty */
@@ -183,6 +199,12 @@ body {
     text-align:center;
     padding:80px 20px;
     color:#666;
+    font-size:18px;
+}
+
+/* Responsive */
+@media(max-width:600px){
+    .grid { grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -205,17 +227,19 @@ body {
 <div class="grid">
 <?php foreach ($wishlist as $w): ?>
 <div class="card">
-    <img src="uploads/<?= htmlspecialchars($w['image']) ?>">
+
+    <div class="card-img">
+        <img src="uploads/<?= htmlspecialchars($w['image']) ?>" alt="">
+    </div>
 
     <div class="card-body">
         <h3><?= htmlspecialchars($w['title']) ?></h3>
-        <p><?= htmlspecialchars($w['country']) ?> • <?= htmlspecialchars($w['city']) ?></p>
+        <div class="location"><?= htmlspecialchars($w['country']) ?> • <?= htmlspecialchars($w['city']) ?></div>
         <div class="price">$<?= number_format($w['price'],2) ?></div>
 
         <div class="actions">
-            <a class="view-btn"
-               href="view_destination.php?id=<?= $w['dest_id'] ?>">
-               View
+            <a class="view-btn" href="view_destination.php?id=<?= $w['dest_id'] ?>">
+                View
             </a>
 
             <form action="wishlist_remove.php" method="get">
@@ -224,6 +248,7 @@ body {
             </form>
         </div>
     </div>
+
 </div>
 <?php endforeach; ?>
 </div>

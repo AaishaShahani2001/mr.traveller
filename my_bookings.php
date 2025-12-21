@@ -10,7 +10,12 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 $sql = $conn->prepare("
-    SELECT b.*, d.title, d.country, d.city 
+    SELECT 
+        b.*, 
+        d.title, 
+        d.country, 
+        d.city,
+        DATEDIFF(b.check_out, b.check_in) AS nights
     FROM bookings b
     JOIN destinations d ON b.dest_id = d.dest_id
     WHERE b.user_id = ?
@@ -29,7 +34,6 @@ $bookings = $sql->fetchAll(PDO::FETCH_ASSOC);
 
 <style>
 * { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
-
 body { margin:0; background:#f5f7ff; }
 
 .container {
@@ -47,12 +51,6 @@ h2 { margin-bottom: 20px; }
     color: #007bff;
     font-weight: bold;
     text-decoration: none;
-    transition: transform 0.3s, color 0.3s;
-}
-
-.back-btn:hover {
-    color: #005fcc;
-    transform: translateX(-5px);
 }
 
 /* Toast */
@@ -68,7 +66,7 @@ h2 { margin-bottom: 20px; }
     z-index: 999;
     opacity: 0;
     transform: translateY(-20px);
-    transition: all .5s ease;
+    transition: .5s;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
@@ -130,7 +128,6 @@ th {
     max-width: 420px;
     width: 100%;
 }
-.modal h3 { margin-top: 0; }
 .modal button {
     padding: 10px 16px;
     border-radius: 10px;
@@ -189,7 +186,9 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <tr>
     <th>Package</th>
     <th>Location</th>
-    <th>Date</th>
+    <th>Check-in</th>
+    <th>Check-out</th>
+    <th>Nights</th>
     <th>People</th>
     <th>Total</th>
     <th>Status</th>
@@ -202,7 +201,9 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <tr>
 <td data-label="Package"><?= htmlspecialchars($b['title']) ?></td>
 <td data-label="Location"><?= htmlspecialchars($b['country']) ?> - <?= htmlspecialchars($b['city']) ?></td>
-<td data-label="Date"><?= $b['travel_date'] ?></td>
+<td data-label="Check-in"><?= $b['check_in'] ?></td>
+<td data-label="Check-out"><?= $b['check_out'] ?></td>
+<td data-label="Nights"><?= $b['nights'] ?></td>
 <td data-label="People"><?= $b['number_of_people'] ?></td>
 <td data-label="Total">$<?= number_format($b['total_amount'],2) ?></td>
 <td data-label="Status">
