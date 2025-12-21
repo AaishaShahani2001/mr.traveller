@@ -16,6 +16,16 @@ $dest = $sql->fetch(PDO::FETCH_ASSOC);
 if (!$dest) {
     die("Destination not found!");
 }
+
+/* Fetch hotels */
+$hotelStmt = $conn->prepare("SELECT * FROM hotels WHERE dest_id = ?");
+$hotelStmt->execute([$dest_id]);
+$hotels = $hotelStmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* Fetch travel facilities */
+$facilityStmt = $conn->prepare("SELECT * FROM travel_facilities WHERE dest_id = ?");
+$facilityStmt->execute([$dest_id]);
+$facilities = $facilityStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -50,15 +60,13 @@ body {
     font-weight: 600;
     color: #007bff;
     text-decoration: none;
-    transition: transform 0.3s, color 0.3s;
 }
 
 .back-link:hover {
-    color: #005fcc;
     transform: translateX(-4px);
 }
 
-/* Card */
+/* Destination Card */
 .details-box {
     background: white;
     padding: 24px;
@@ -69,7 +77,6 @@ body {
     align-items: center;
 }
 
-/* Image */
 .image-box {
     flex: 1;
 }
@@ -77,12 +84,11 @@ body {
 .image-box img {
     width: 100%;
     height: 420px;
-    object-fit: contain;          
+    object-fit: contain;
     background: #f1f3ff;
     border-radius: 16px;
 }
 
-/* Info */
 .info-box {
     flex: 1.2;
 }
@@ -108,13 +114,11 @@ body {
 .duration {
     font-size: 17px;
     margin-bottom: 12px;
-    color: #444;
 }
 
 .desc {
     line-height: 1.7;
     color: #444;
-    margin-top: 15px;
 }
 
 /* Buttons */
@@ -122,7 +126,6 @@ body {
     margin-top: 28px;
     display: flex;
     gap: 16px;
-    flex-wrap: wrap;
 }
 
 .btn {
@@ -131,8 +134,6 @@ body {
     border-radius: 30px;
     text-decoration: none;
     font-weight: bold;
-    display: inline-block;
-    transition: transform 0.3s, box-shadow 0.3s;
     cursor: pointer;
     border: none;
 }
@@ -147,35 +148,63 @@ body {
     color: white;
 }
 
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+/* Sections */
+.section {
+    margin-top: 60px;
 }
 
-/* Toast */
-.toast {
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%) translateY(50px);
-    background: #28a745;
+.section h3 {
+    font-size: 26px;
+    margin-bottom: 20px;
+}
+
+/* Cards */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    overflow: hidden;
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.card-body h4 {
+    margin: 0 0 6px;
+    font-size: 18px;
+}
+
+.card-body p {
+    font-size: 14px;
+    color: #555;
+}
+
+.badge {
+    background: #007bff;
     color: white;
-    padding: 14px 26px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 15px;
-    opacity: 0;
-    transition: 0.5s;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    z-index: 9999;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: inline-block;
+    margin-bottom: 6px;
 }
-.toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.toast.warning {
-    background: #ffc107;
-    color: #333;
+
+.price-tag {
+    font-weight: bold;
+    color: #007bff;
 }
 
 /* Responsive */
@@ -187,9 +216,6 @@ body {
     .image-box img {
         height: 300px;
     }
-    .btn-row {
-        justify-content: center;
-    }
 }
 </style>
 </head>
@@ -197,60 +223,74 @@ body {
 <body>
 
 <div class="container">
-    <a href="destinations.php" class="back-link">← Back to Destinations</a>
+<a href="destinations.php" class="back-link">← Back to Destinations</a>
 
-    <div class="details-box">
-        <!-- IMAGE -->
-        <div class="image-box">
-            <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="Destination Image">
-        </div>
+<!-- DESTINATION DETAILS -->
+<div class="details-box">
+    <div class="image-box">
+        <img src="uploads/<?= htmlspecialchars($dest['image']) ?>">
+    </div>
 
-        <!-- INFO -->
-        <div class="info-box">
-            <h2><?= htmlspecialchars($dest['title']) ?></h2>
-            <p class="location"><?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?></p>
-            <p class="price">$<?= number_format($dest['price'], 2) ?></p>
-            <p class="duration">Duration: <?= htmlspecialchars($dest['duration']) ?></p>
-            <p class="desc"><?= nl2br(htmlspecialchars($dest['description'])) ?></p>
+    <div class="info-box">
+        <h2><?= htmlspecialchars($dest['title']) ?></h2>
+        <p class="location"><?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?></p>
+        <p class="price">$<?= number_format($dest['price'], 2) ?></p>
+        <p class="duration">Duration: <?= htmlspecialchars($dest['duration']) ?></p>
+        <p class="desc"><?= nl2br(htmlspecialchars($dest['description'])) ?></p>
 
-            <div class="btn-row">
-                <a class="btn book-btn" href="booking.php?id=<?= $dest['dest_id'] ?>">Book Now</a>
-                <button class="btn wish-btn" onclick="addToWishlist(<?= $dest['dest_id'] ?>)">Add to Wishlist</button>
-            </div>
+        <div class="btn-row">
+            <a class="btn book-btn" href="booking.php?id=<?= $dest_id ?>">Book Now</a>
+            <button class="btn wish-btn">Add to Wishlist</button>
         </div>
     </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- HOTELS -->
+<div class="section">
+<h3>🏨 Available Accommodations</h3>
 
-<script>
-function showToast(message, type = "success") {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = "toast " + (type === "warning" ? "warning" : "");
-    toast.classList.add("show");
+<?php if ($hotels): ?>
+<div class="card-grid">
+<?php foreach ($hotels as $h): ?>
+<div class="card">
+    <img src="uploads/<?= htmlspecialchars($h['image']) ?>">
+    <div class="card-body">
+        <span class="badge"><?= htmlspecialchars($h['type']) ?></span>
+        <h4><?= htmlspecialchars($h['name']) ?></h4>
+        <p>⭐ Rating: <?= $h['rating'] ?: 'N/A' ?></p>
+        <p class="price-tag">$<?= number_format($h['price_per_night'], 2) ?> / night</p>
+        <p><?= htmlspecialchars($h['amenities']) ?></p>
+    </div>
+</div>
+<?php endforeach; ?>
+</div>
+<?php else: ?>
+<p>No accommodations available.</p>
+<?php endif; ?>
+</div>
 
-    setTimeout(() => toast.classList.remove("show"), 3000);
-}
+<!-- TRAVEL FACILITIES -->
+<div class="section">
+<h3>🚗 Travel Facilities</h3>
 
-function addToWishlist(id) {
-    fetch("wishlist_add.php?id=" + id, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "success") {
-            showToast(data.message, "success");
-        } else if (data.status === "info") {
-            showToast(data.message, "warning");
-        } else {
-            showToast("Something went wrong!", "warning");
-        }
-    })
-    .catch(() => showToast("Error adding to wishlist", "warning"));
-}
-</script>
+<?php if ($facilities): ?>
+<div class="card-grid">
+<?php foreach ($facilities as $f): ?>
+<div class="card">
+    <div class="card-body">
+        <span class="badge"><?= htmlspecialchars($f['transport_type']) ?></span>
+        <h4><?= htmlspecialchars($f['provider_name']) ?></h4>
+        <p>Duration: <?= htmlspecialchars($f['duration']) ?></p>
+        <p class="price-tag">$<?= number_format($f['price'], 2) ?></p>
+    </div>
+</div>
+<?php endforeach; ?>
+</div>
+<?php else: ?>
+<p>No travel facilities available.</p>
+<?php endif; ?>
+</div>
 
+</div>
 </body>
 </html>
