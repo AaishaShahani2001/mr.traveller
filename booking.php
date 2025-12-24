@@ -2,111 +2,60 @@
 session_start();
 require "config.php";
 
-/* ---------- Login check ---------- */
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-/* ---------- Validate destination ---------- */
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    die("Invalid destination!");
+    die("Invalid destination");
 }
 
 $dest_id = (int)$_GET['id'];
+$user_id = $_SESSION['user_id'];
 
-/* ---------- Fetch destination ---------- */
-$sql = $conn->prepare("SELECT * FROM destinations WHERE dest_id = ?");
-$sql->execute([$dest_id]);
-$dest = $sql->fetch(PDO::FETCH_ASSOC);
+/* Fetch destination */
+$destStmt = $conn->prepare("SELECT * FROM destinations WHERE dest_id = ?");
+$destStmt->execute([$dest_id]);
+$dest = $destStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$dest) {
-    die("Destination not found!");
+    die("Destination not found");
 }
 
-/* ---------- Handle booking ---------- */
-$error_msg = "";
+/* Fetch hotels */
+$hotelStmt = $conn->prepare("SELECT * FROM hotels WHERE dest_id = ?");
+$hotelStmt->execute([$dest_id]);
+$hotels = $hotelStmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* Fetch travel facilities */
+$facilityStmt = $conn->prepare("SELECT * FROM travel_facilities WHERE dest_id = ?");
+$facilityStmt->execute([$dest_id]);
+$facilities = $facilityStmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* Booking submit */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $check_in  = $_POST['check_in'] ?? '';
-    $check_out = $_POST['check_out'] ?? '';
-    $number_of_people = (int)($_POST['number_of_people'] ?? 0);
+    $check_in    = $_POST['check_in'];
+    $check_out   = $_POST['check_out'];
+    $people      = (int)$_POST['people'];
+    $hotel_id    = (int)$_POST['hotel_id'];
+    $facility_id = (int)$_POST['facility_id'];
+    $total       = $_POST['total_price'];
 
-    $today = date('Y-m-d');
+    $insert = $conn->prepare("
+        INSERT INTO bookings
+        (user_id, dest_id, hotel_id, facility_id, check_in, check_out, number_of_people, total_price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    ");
 
-    if ($number_of_people < 1) {
-        $error_msg = "Number of people must be at least 1.";
-    }
-    elseif (!$check_in || !$check_out) {
-        $error_msg = "Please select check-in and check-out dates.";
-    }
-    elseif ($check_in < $today) {
-        $error_msg = "Check-in date cannot be in the past.";
-    }
-    elseif ($check_out <= $check_in) {
-        $error_msg = "Check-out date must be after check-in date.";
-    }
-    else {
+    $insert->execute([
+        $user_id, $dest_id, $hotel_id, $facility_id,
+        $check_in, $check_out, $people, $total
+    ]);
 
-        /* ---------- Overlap check ---------- */
-        $overlapStmt = $conn->prepare("
-            SELECT COUNT(*)
-            FROM bookings
-            WHERE dest_id = ?
-              AND status IN ('pending','confirmed')
-              AND check_in < ?
-              AND check_out > ?
-        ");
-
-        $overlapStmt->execute([
-            $dest_id,
-            $check_out,
-            $check_in
-        ]);
-
-        $overlaps = $overlapStmt->fetchColumn();
-
-        if ($overlaps > 0) {
-            $error_msg = "❌ This destination is already booked for selected dates.";
-        } else {
-
-            $user_id = $_SESSION['user_id'];
-            $booking_date = date('Y-m-d');
-
-            /* ---------- Calculate nights ---------- */
-            $start = new DateTime($check_in);
-            $end   = new DateTime($check_out);
-            $nights = $start->diff($end)->days;
-
-            if ($nights < 1) {
-                $error_msg = "Invalid booking duration.";
-            } else {
-
-                /* ---------- Total amount ---------- */
-                $total_amount = $dest['price'] * $number_of_people * $nights;
-
-                $stmt = $conn->prepare("
-                    INSERT INTO bookings
-                    (user_id, dest_id, booking_date, check_in, check_out, number_of_people, total_amount, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
-                ");
-
-                $stmt->execute([
-                    $user_id,
-                    $dest_id,
-                    $booking_date,
-                    $check_in,
-                    $check_out,
-                    $number_of_people,
-                    $total_amount
-                ]);
-
-                header("Location: my_bookings.php?msg=booked");
-                exit;
-            }
-        }
-    }
+    header("Location: my_bookings.php");
+    exit;
 }
 ?>
 
@@ -114,83 +63,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Book: <?= htmlspecialchars($dest['title']) ?> | Mr.Traveller</title>
+<title>Booking | <?= htmlspecialchars($dest['title']) ?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
-body { margin: 0; background: #f5f7ff; }
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
 
-.container { max-width: 1200px; margin: auto; padding: 40px 20px; }
+body {
+    margin: 0;
+    background: linear-gradient(135deg, #eef2ff, #f5f7ff);
+}
 
-.back-link {
-    display: inline-block;
-    margin-bottom: 18px;
-    font-size: 15px;
+/* Top Bar */
+.top-bar {
+    max-width: 900px;
+    margin: 30px auto 10px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+.top-bar a {
+    text-decoration: none;
     font-weight: 600;
     color: #007bff;
-    text-decoration: none;
 }
 
-.booking-box {
+/* Container */
+.container {
+    max-width: 900px;
+    margin: 10px auto 40px;
     background: white;
-    padding: 24px;
-    border-radius: 18px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-    display: flex;
-    gap: 30px;
-    align-items: center;
+    padding: 32px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
 }
 
-.image-box { flex: 1; }
-
-.image-box img {
-    width: 100%;
-    height: 380px;
-    object-fit: contain;
-    background: #f1f3ff;
-    border-radius: 16px;
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
 }
 
-.form-box { flex: 1.2; }
+.header h2 {
+    margin-bottom: 6px;
+    font-size: 28px;
+}
 
+.header p {
+    color: #555;
+    font-weight: 500;
+}
+
+/* Form */
 label {
-    display: block;
-    margin-top: 14px;
     font-weight: 600;
+    margin-top: 14px;
+    display: block;
 }
 
-input {
+input, select {
     width: 100%;
-    padding: 12px;
+    padding: 12px 14px;
     margin-top: 6px;
     border-radius: 10px;
     border: 1px solid #ccc;
+    font-size: 15px;
 }
 
-button {
-    width: 100%;
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Total */
+.total-box {
     margin-top: 22px;
+    padding: 18px;
+    background: #f1f5ff;
+    border-radius: 14px;
+    text-align: center;
+}
+
+.total-box span {
+    font-size: 26px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* Button */
+.btn {
+    margin-top: 28px;
+    width: 100%;
     padding: 14px;
+    font-size: 16px;
     border-radius: 30px;
     border: none;
-    background: #007bff;
-    color: white;
-    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    background: #007bff;
+    color: white;
+    transition: 0.3s;
 }
 
-.error {
-    margin-top: 15px;
-    color: #c0392b;
-    font-weight: 600;
+.btn:hover {
+    background: #005fcc;
 }
 
-@media (max-width: 900px) {
-    .booking-box {
-        flex-direction: column;
-        text-align: center;
+/* Responsive */
+@media (max-width: 700px) {
+    .grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -198,44 +186,98 @@ button {
 
 <body>
 
+<div class="top-bar">
+    <a href="home.php">← Back to Home</a>
+    <a href="view_destination.php?id=<?= $dest_id ?>">← Back to Destination</a>
+</div>
+
 <div class="container">
 
-<a href="view_destination.php?id=<?= $dest['dest_id'] ?>" class="back-link">
-← Back to Destination
-</a>
-
-<div class="booking-box">
-
-<div class="image-box">
-    <img src="uploads/<?= htmlspecialchars($dest['image']) ?>">
+<div class="header">
+    <h2>Book Your Trip</h2>
+    <p><?= htmlspecialchars($dest['title']) ?> — <?= htmlspecialchars($dest['country']) ?></p>
 </div>
 
-<div class="form-box">
-    <h2><?= htmlspecialchars($dest['title']) ?></h2>
-    <p><?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?></p>
-    <p><strong>$<?= number_format($dest['price'],2) ?></strong> per person / per night</p>
+<form method="post">
 
-    <form method="POST">
-
+<div class="grid">
+    <div>
         <label>Check-in Date</label>
-        <input type="date" name="check_in" min="<?= date('Y-m-d') ?>" required>
+        <input type="date" name="check_in" id="check_in" required>
+    </div>
 
+    <div>
         <label>Check-out Date</label>
-        <input type="date" name="check_out" min="<?= date('Y-m-d') ?>" required>
-
-        <label>Number of People</label>
-        <input type="number" name="number_of_people" value="1" min="1" required>
-
-        <button type="submit">Confirm Booking</button>
-    </form>
-
-    <?php if ($error_msg): ?>
-        <p class="error"><?= htmlspecialchars($error_msg) ?></p>
-    <?php endif; ?>
-
+        <input type="date" name="check_out" id="check_out" required>
+    </div>
 </div>
+
+<label>Number of People</label>
+<input type="number" name="people" id="people" value="1" min="1" required>
+
+<label>Select Accommodation</label>
+<select name="hotel_id" id="hotel" required>
+    <option value="">Choose Hotel</option>
+    <?php foreach ($hotels as $h): ?>
+    <option value="<?= $h['hotel_id'] ?>" data-price="<?= $h['price_per_night'] ?>">
+        <?= $h['name'] ?> — $<?= $h['price_per_night'] ?>/night
+    </option>
+    <?php endforeach; ?>
+</select>
+
+<label>Select Travel Facility</label>
+<select name="facility_id" id="facility" required>
+    <option value="">Choose Transport</option>
+    <?php foreach ($facilities as $f): ?>
+    <option value="<?= $f['facility_id'] ?>" data-price="<?= $f['price'] ?>">
+        <?= $f['transport_type'] ?> (<?= $f['provider_name'] ?>) — $<?= $f['price'] ?>
+    </option>
+    <?php endforeach; ?>
+</select>
+
+<div class="total-box">
+    Total Price: $<span id="total">0.00</span>
 </div>
+
+<input type="hidden" name="total_price" id="total_price">
+
+<button type="submit" class="btn">Confirm Booking</button>
+
+</form>
 </div>
+
+<script>
+const basePrice = <?= $dest['price'] ?>;
+
+function calculateTotal() {
+    const people = Number(document.getElementById("people").value || 1);
+    const checkIn = new Date(document.getElementById("check_in").value);
+    const checkOut = new Date(document.getElementById("check_out").value);
+
+    let nights = 0;
+    if (checkIn && checkOut && checkOut > checkIn) {
+        nights = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+    }
+
+    const hotel = document.getElementById("hotel");
+    const hotelPrice = Number(hotel.selectedOptions[0]?.dataset.price || 0);
+
+    const facility = document.getElementById("facility");
+    const facilityPrice = Number(facility.selectedOptions[0]?.dataset.price || 0);
+
+    const total =
+        (basePrice * people) +
+        (hotelPrice * nights) +
+        facilityPrice;
+
+    document.getElementById("total").textContent = total.toFixed(2);
+    document.getElementById("total_price").value = total.toFixed(2);
+}
+
+document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("change", calculateTotal);
+});
+</script>
 
 </body>
 </html>

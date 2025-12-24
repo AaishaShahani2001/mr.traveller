@@ -11,13 +11,19 @@ $user_id = $_SESSION['user_id'];
 
 $sql = $conn->prepare("
     SELECT 
-        b.*, 
-        d.title, 
-        d.country, 
+        b.*,
+        d.title,
+        d.country,
         d.city,
+        h.name AS hotel_name,
+        h.type AS hotel_type,
+        f.transport_type,
+        f.provider_name,
         DATEDIFF(b.check_out, b.check_in) AS nights
     FROM bookings b
     JOIN destinations d ON b.dest_id = d.dest_id
+    LEFT JOIN hotels h ON b.hotel_id = h.hotel_id
+    LEFT JOIN travel_facilities f ON b.facility_id = f.facility_id
     WHERE b.user_id = ?
     ORDER BY b.booking_id DESC
 ");
@@ -37,7 +43,7 @@ $bookings = $sql->fetchAll(PDO::FETCH_ASSOC);
 body { margin:0; background:#f5f7ff; }
 
 .container {
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
     padding:40px 20px;
 }
@@ -49,23 +55,6 @@ body { margin:0; background:#f5f7ff; }
     font-weight:bold;
     text-decoration:none;
 }
-
-/* ===== TOAST ===== */
-.toast {
-    position:fixed;
-    top:20px;
-    right:20px;
-    background:#2ecc71;
-    color:white;
-    padding:14px 22px;
-    border-radius:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.25);
-    opacity:0;
-    transform:translateY(-20px);
-    transition:.5s;
-    z-index:9999;
-}
-.toast.show { opacity:1; transform:translateY(0); }
 
 /* ===== TABLE ===== */
 table {
@@ -80,19 +69,13 @@ table {
 th, td {
     padding:14px;
     border-bottom:1px solid #eee;
-    white-space: nowrap; /* 🔑 keep in one line */
+    white-space: nowrap;
+    text-align:center;
 }
 
 th {
     background:#007bff;
     color:white;
-}
-
-/* Fixed column widths */
-td:nth-child(3),
-td:nth-child(4) {
-    width:120px;
-    text-align:center;
 }
 
 /* ===== STATUS ===== */
@@ -101,7 +84,6 @@ td:nth-child(4) {
     border-radius:999px;
     font-weight:bold;
     font-size:14px;
-    display:inline-block;
 }
 .pending { background:#fff3cd; color:#856404; }
 .confirmed { background:#d4edda; color:#155724; }
@@ -111,7 +93,7 @@ td:nth-child(4) {
 .actions {
     display:flex;
     gap:8px;
-    align-items:center;
+    justify-content:center;
 }
 
 .action-btn {
@@ -119,86 +101,23 @@ td:nth-child(4) {
     border-radius:999px;
     font-size:13px;
     font-weight:bold;
+    border:none;
+    cursor:pointer;
     text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    border:none;
-    cursor:pointer;
 }
 
-/* Buttons */
-.edit-btn {
-    background:#e8f0ff;
-    color:#005fcc;
-}
-.edit-btn:hover { background:#d6e4ff; }
-
-.cancel-btn {
-    background:#fdecea;
-    color:#c0392b;
-}
-.cancel-btn:hover { background:#fadbd8; }
-
-.invoice-btn {
-    background:#eef3ff;
-    color:#2c3e50;
-}
-.invoice-btn:hover { background:#dfe7ff; }
-
-/* ===== MODAL ===== */
-.modal-bg {
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.55);
-    display:none;
-    justify-content:center;
-    align-items:center;
-}
-.modal-bg.show { display:flex; }
-
-.modal {
-    background:white;
-    padding:22px;
-    border-radius:16px;
-    max-width:420px;
-    width:100%;
-}
-.modal-actions {
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-}
-.modal button {
-    padding:10px 16px;
-    border-radius:10px;
-    border:none;
-    font-weight:bold;
-    cursor:pointer;
-}
-.btn-close { background:#e9ecef; }
-.btn-confirm { background:#dc3545; color:white; }
+.edit-btn { background:#e8f0ff; color:#005fcc; }
+.cancel-btn { background:#fdecea; color:#c0392b; }
+.invoice-btn { background:#eef3ff; color:#2c3e50; }
 
 /* ===== MOBILE ===== */
-@media(max-width:900px){
-    table { font-size:14px; }
+@media(max-width:1000px){
+    table { font-size:13px; }
 }
 </style>
 </head>
 
 <body>
-
-<!-- ===== SUCCESS TOAST ===== -->
-<?php if (isset($_GET['msg'])): ?>
-<div class="toast" id="toast">
-    <?= $_GET['msg']==='updated' ? 'Booking updated successfully ✅' : 'Booking successful 🎉' ?>
-</div>
-<script>
-const toast = document.getElementById("toast");
-setTimeout(()=>toast.classList.add("show"),200);
-setTimeout(()=>toast.classList.remove("show"),3000);
-</script>
-<?php endif; ?>
 
 <div class="container">
 
@@ -214,6 +133,8 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <tr>
     <th>Package</th>
     <th>Location</th>
+    <th>Hotel</th>
+    <th>Transport</th>
     <th>Check-in</th>
     <th>Check-out</th>
     <th>Nights</th>
@@ -228,37 +149,54 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <?php foreach ($bookings as $b): ?>
 <tr>
 <td><?= htmlspecialchars($b['title']) ?></td>
+
 <td><?= htmlspecialchars($b['country']) ?> – <?= htmlspecialchars($b['city']) ?></td>
+
+<td>
+    <?= htmlspecialchars($b['hotel_name'] ?? 'N/A') ?><br>
+    <small>(<?= htmlspecialchars($b['hotel_type'] ?? '-') ?>)</small>
+</td>
+
+<td>
+    <?= htmlspecialchars($b['transport_type'] ?? 'N/A') ?><br>
+    <small><?= htmlspecialchars($b['provider_name'] ?? '-') ?></small>
+</td>
+
 <td><?= $b['check_in'] ?></td>
 <td><?= $b['check_out'] ?></td>
 <td><?= $b['nights'] ?></td>
 <td><?= $b['number_of_people'] ?></td>
-<td>$<?= number_format($b['total_amount'],2) ?></td>
+
+<td><strong>$<?= number_format($b['total_price'],2) ?></strong></td>
+
 <td>
     <span class="status <?= $b['status'] ?>">
         <?= ucfirst($b['status']) ?>
     </span>
 </td>
+
 <td>
-    <div class="actions">
-        <a class="action-btn edit-btn"
-           href="user_update_booking.php?id=<?= $b['booking_id'] ?>">
-           ✏️ Edit
-        </a>
+<div class="actions">
 
-        <?php if ($b['status'] === 'pending'): ?>
-        <button class="action-btn cancel-btn"
-            onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">
-            ❌ Cancel
-        </button>
-        <?php endif; ?>
+<a class="action-btn edit-btn"
+   href="user_update_booking.php?id=<?= $b['booking_id'] ?>">
+   ✏️ Edit
+</a>
 
-        <a class="action-btn invoice-btn"
-           href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
-           target="_blank">
-           🧾 Invoice
-        </a>
-    </div>
+<?php if ($b['status'] === 'pending'): ?>
+<button class="action-btn cancel-btn"
+onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">
+❌ Cancel
+</button>
+<?php endif; ?>
+
+<a class="action-btn invoice-btn"
+   href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
+   target="_blank">
+🧾 Invoice
+</a>
+
+</div>
 </td>
 </tr>
 <?php endforeach; ?>
@@ -274,9 +212,9 @@ setTimeout(()=>toast.classList.remove("show"),3000);
         <h3>Cancel Booking</h3>
         <p>Are you sure you want to cancel this booking?</p>
         <div class="modal-actions">
-            <button class="btn-close" onclick="closeModal()">No</button>
+            <button onclick="closeModal()">No</button>
             <a id="cancelLink">
-                <button class="btn-confirm">Yes, Cancel</button>
+                <button class="cancel-btn">Yes, Cancel</button>
             </a>
         </div>
     </div>
@@ -285,10 +223,10 @@ setTimeout(()=>toast.classList.remove("show"),3000);
 <script>
 function openModal(url){
     document.getElementById("cancelLink").href = url;
-    document.getElementById("modal").classList.add("show");
+    document.getElementById("modal").style.display = "flex";
 }
 function closeModal(){
-    document.getElementById("modal").classList.remove("show");
+    document.getElementById("modal").style.display = "none";
 }
 </script>
 
