@@ -56,7 +56,11 @@ body { margin:0; background:#f5f7ff; }
     text-decoration:none;
 }
 
-/* ===== TABLE ===== */
+/* ===== DESKTOP TABLE ===== */
+.table-wrap {
+    display:block;
+}
+
 table {
     width:100%;
     border-collapse:collapse;
@@ -94,6 +98,7 @@ th {
     display:flex;
     gap:8px;
     justify-content:center;
+    flex-wrap:wrap;
 }
 
 .action-btn {
@@ -110,9 +115,67 @@ th {
 .cancel-btn { background:#fdecea; color:#c0392b; }
 .invoice-btn { background:#eef3ff; color:#2c3e50; }
 
-/* ===== MOBILE ===== */
-@media(max-width:1000px){
-    table { font-size:13px; }
+/* ===== MOBILE CARDS ===== */
+.mobile-cards {
+    display:none;
+    gap:20px;
+}
+
+.card {
+    background:white;
+    padding:18px;
+    border-radius:16px;
+    box-shadow:0 15px 40px rgba(0,0,0,.12);
+}
+
+.card h3 {
+    margin:0 0 6px;
+}
+
+.card p {
+    margin:4px 0;
+    font-size:14px;
+}
+
+/* ===== MODAL ===== */
+.modal-bg {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal {
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+}
+
+.modal-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:20px;
+}
+
+.modal-actions button {
+    padding:10px 16px;
+    border-radius:10px;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+    .table-wrap { display:none; }
+    .mobile-cards { display:grid; }
 }
 </style>
 </head>
@@ -128,6 +191,8 @@ th {
 <p>You have no bookings yet.</p>
 <?php else: ?>
 
+<!-- ===== DESKTOP TABLE ===== -->
+<div class="table-wrap">
 <table>
 <thead>
 <tr>
@@ -149,75 +214,67 @@ th {
 <?php foreach ($bookings as $b): ?>
 <tr>
 <td><?= htmlspecialchars($b['title']) ?></td>
-
 <td><?= htmlspecialchars($b['country']) ?> – <?= htmlspecialchars($b['city']) ?></td>
-
-<td>
-    <?= htmlspecialchars($b['hotel_name'] ?? 'N/A') ?><br>
-    <small>(<?= htmlspecialchars($b['hotel_type'] ?? '-') ?>)</small>
-</td>
-
-<td>
-    <?= htmlspecialchars($b['transport_type'] ?? 'N/A') ?><br>
-    <small><?= htmlspecialchars($b['provider_name'] ?? '-') ?></small>
-</td>
-
+<td><?= htmlspecialchars($b['hotel_name'] ?? 'N/A') ?></td>
+<td><?= htmlspecialchars($b['transport_type'] ?? 'N/A') ?></td>
 <td><?= $b['check_in'] ?></td>
 <td><?= $b['check_out'] ?></td>
 <td><?= $b['nights'] ?></td>
 <td><?= $b['number_of_people'] ?></td>
-
-<td><strong>$<?= number_format($b['total_price'],2) ?></strong></td>
-
-<td>
-    <span class="status <?= $b['status'] ?>">
-        <?= ucfirst($b['status']) ?>
-    </span>
-</td>
-
+<td>$<?= number_format($b['total_amount']) ?></td>
+<td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
 <td>
 <div class="actions">
-
-<a class="action-btn edit-btn"
-   href="user_update_booking.php?id=<?= $b['booking_id'] ?>">
-   ✏️ Edit
-</a>
-
-<?php if ($b['status'] === 'pending'): ?>
-<button class="action-btn cancel-btn"
-onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">
-❌ Cancel
-</button>
+<a class="action-btn edit-btn" href="user_update_booking.php?id=<?= $b['booking_id'] ?>">✏️ Edit</a>
+<?php if ($b['status']==='pending'): ?>
+<button class="action-btn cancel-btn" onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">❌ Cancel</button>
 <?php endif; ?>
-
-<a class="action-btn invoice-btn"
-   href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>"
-   target="_blank">
-🧾 Invoice
-</a>
-
+<a class="action-btn invoice-btn" href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>" target="_blank">🧾 Invoice</a>
 </div>
 </td>
 </tr>
 <?php endforeach; ?>
 </tbody>
 </table>
+</div>
+
+<!-- ===== MOBILE CARDS ===== -->
+<div class="mobile-cards">
+<?php foreach ($bookings as $b): ?>
+<div class="card">
+<h3><?= htmlspecialchars($b['title']) ?></h3>
+<p><strong>Location:</strong> <?= htmlspecialchars($b['country']) ?> – <?= htmlspecialchars($b['city']) ?></p>
+<p><strong>Hotel:</strong> <?= htmlspecialchars($b['hotel_name'] ?? 'N/A') ?></p>
+<p><strong>Transport:</strong> <?= htmlspecialchars($b['transport_type'] ?? 'N/A') ?></p>
+<p><strong>Dates:</strong> <?= $b['check_in'] ?> → <?= $b['check_out'] ?></p>
+<p><strong>People:</strong> <?= $b['number_of_people'] ?></p>
+<p><strong>Total:</strong> $<?= number_format($b['total_amount'],2) ?></p>
+<p><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></p>
+
+<div class="actions">
+<a class="action-btn edit-btn" href="user_update_booking.php?id=<?= $b['booking_id'] ?>">✏️ Edit</a>
+<?php if ($b['status']==='pending'): ?>
+<button class="action-btn cancel-btn" onclick="openModal('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">❌ Cancel</button>
+<?php endif; ?>
+<a class="action-btn invoice-btn" href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>" target="_blank">🧾 Invoice</a>
+</div>
+</div>
+<?php endforeach; ?>
+</div>
 
 <?php endif; ?>
 </div>
 
-<!-- ===== CANCEL MODAL ===== -->
+<!-- ===== MODAL ===== -->
 <div class="modal-bg" id="modal">
-    <div class="modal">
-        <h3>Cancel Booking</h3>
-        <p>Are you sure you want to cancel this booking?</p>
-        <div class="modal-actions">
-            <button onclick="closeModal()">No</button>
-            <a id="cancelLink">
-                <button class="cancel-btn">Yes, Cancel</button>
-            </a>
-        </div>
-    </div>
+<div class="modal">
+<h3>Cancel Booking</h3>
+<p>Are you sure you want to cancel this booking?</p>
+<div class="modal-actions">
+<button onclick="closeModal()">No</button>
+<a id="cancelLink"><button class="cancel-btn">Yes, Cancel</button></a>
+</div>
+</div>
 </div>
 
 <script>

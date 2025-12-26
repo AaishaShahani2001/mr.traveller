@@ -11,6 +11,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 /* ---------- Stats ---------- */
 $totalUsers = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalDestinations = $conn->query("SELECT COUNT(*) FROM destinations")->fetchColumn();
+$totalHotels = $conn->query("SELECT COUNT(*) FROM hotels")->fetchColumn();                // ✅ NEW
+$totalFacilities = $conn->query("SELECT COUNT(*) FROM travel_facilities")->fetchColumn(); // ✅ NEW
 $totalBookings = $conn->query("SELECT COUNT(*) FROM bookings")->fetchColumn();
 
 /* ---------- Revenue ---------- */
@@ -168,6 +170,8 @@ th { text-align:left; color:#555; }
 <div class="cards">
     <div class="card"><h3>Total Users</h3><span><?= $totalUsers ?></span></div>
     <div class="card"><h3>Total Destinations</h3><span><?= $totalDestinations ?></span></div>
+    <div class="card"><h3>Total Hotels</h3><span><?= $totalHotels ?></span></div>          <!-- ✅ -->
+    <div class="card"><h3>Total Facilities</h3><span><?= $totalFacilities ?></span></div>  <!-- ✅ -->
     <div class="card"><h3>Total Bookings</h3><span><?= $totalBookings ?></span></div>
 </div>
 

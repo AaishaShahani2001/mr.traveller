@@ -33,7 +33,7 @@ $facilityStmt = $conn->prepare("SELECT * FROM travel_facilities WHERE dest_id = 
 $facilityStmt->execute([$dest_id]);
 $facilities = $facilityStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Booking submit */
+/* ---------- Booking Submit ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $check_in    = $_POST['check_in'];
@@ -41,20 +41,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $people      = (int)$_POST['people'];
     $hotel_id    = (int)$_POST['hotel_id'];
     $facility_id = (int)$_POST['facility_id'];
-    $total       = $_POST['total_price'];
+
+    // Price comes from JS but stored into total_amount
+    $total_amount = (float)$_POST['total_price'];
+
+    $booking_date = date('Y-m-d');
 
     $insert = $conn->prepare("
         INSERT INTO bookings
-        (user_id, dest_id, hotel_id, facility_id, check_in, check_out, number_of_people, total_price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        (user_id, dest_id, hotel_id, facility_id,
+         booking_date, check_in, check_out,
+         number_of_people, total_amount, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     ");
 
     $insert->execute([
-        $user_id, $dest_id, $hotel_id, $facility_id,
-        $check_in, $check_out, $people, $total
+        $user_id,
+        $dest_id,
+        $hotel_id,
+        $facility_id,
+        $booking_date,
+        $check_in,
+        $check_out,
+        $people,
+        $total_amount
     ]);
 
-    header("Location: my_bookings.php");
+    header("Location: my_bookings.php?msg=success");
     exit;
 }
 ?>
@@ -77,7 +90,7 @@ body {
     background: linear-gradient(135deg, #eef2ff, #f5f7ff);
 }
 
-/* Top Bar */
+/* Top bar */
 .top-bar {
     max-width: 900px;
     margin: 30px auto 10px;
@@ -205,7 +218,6 @@ input, select {
         <label>Check-in Date</label>
         <input type="date" name="check_in" id="check_in" required>
     </div>
-
     <div>
         <label>Check-out Date</label>
         <input type="date" name="check_out" id="check_out" required>
@@ -220,7 +232,7 @@ input, select {
     <option value="">Choose Hotel</option>
     <?php foreach ($hotels as $h): ?>
     <option value="<?= $h['hotel_id'] ?>" data-price="<?= $h['price_per_night'] ?>">
-        <?= $h['name'] ?> — $<?= $h['price_per_night'] ?>/night
+        <?= htmlspecialchars($h['name']) ?> — $<?= $h['price_per_night'] ?>/night
     </option>
     <?php endforeach; ?>
 </select>
@@ -230,7 +242,8 @@ input, select {
     <option value="">Choose Transport</option>
     <?php foreach ($facilities as $f): ?>
     <option value="<?= $f['facility_id'] ?>" data-price="<?= $f['price'] ?>">
-        <?= $f['transport_type'] ?> (<?= $f['provider_name'] ?>) — $<?= $f['price'] ?>
+        <?= htmlspecialchars($f['transport_type']) ?>
+        (<?= htmlspecialchars($f['provider_name']) ?>) — $<?= $f['price'] ?>
     </option>
     <?php endforeach; ?>
 </select>
@@ -239,6 +252,7 @@ input, select {
     Total Price: $<span id="total">0.00</span>
 </div>
 
+<!-- JS price → PHP → total_amount -->
 <input type="hidden" name="total_price" id="total_price">
 
 <button type="submit" class="btn">Confirm Booking</button>
@@ -247,7 +261,7 @@ input, select {
 </div>
 
 <script>
-const basePrice = <?= $dest['price'] ?>;
+const basePrice = <?= (float)$dest['price'] ?>;
 
 function calculateTotal() {
     const people = Number(document.getElementById("people").value || 1);
@@ -259,11 +273,13 @@ function calculateTotal() {
         nights = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
     }
 
-    const hotel = document.getElementById("hotel");
-    const hotelPrice = Number(hotel.selectedOptions[0]?.dataset.price || 0);
+    const hotelPrice = Number(
+        document.getElementById("hotel").selectedOptions[0]?.dataset.price || 0
+    );
 
-    const facility = document.getElementById("facility");
-    const facilityPrice = Number(facility.selectedOptions[0]?.dataset.price || 0);
+    const facilityPrice = Number(
+        document.getElementById("facility").selectedOptions[0]?.dataset.price || 0
+    );
 
     const total =
         (basePrice * people) +
