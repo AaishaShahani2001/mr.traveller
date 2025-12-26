@@ -53,6 +53,7 @@ body {
     padding: 40px 20px;
 }
 
+/* Back link */
 .back-link {
     display: inline-block;
     margin-bottom: 18px;
@@ -62,11 +63,7 @@ body {
     text-decoration: none;
 }
 
-.back-link:hover {
-    transform: translateX(-4px);
-}
-
-/* Destination Card */
+/* Destination details */
 .details-box {
     background: white;
     padding: 24px;
@@ -84,8 +81,7 @@ body {
 .image-box img {
     width: 100%;
     height: 420px;
-    object-fit: contain;
-    background: #f1f3ff;
+    object-fit: cover;
     border-radius: 16px;
 }
 
@@ -108,17 +104,15 @@ body {
     font-size: 26px;
     font-weight: bold;
     color: #007bff;
-    margin-bottom: 10px;
 }
 
 .duration {
-    font-size: 17px;
-    margin-bottom: 12px;
+    margin: 10px 0;
 }
 
 .desc {
-    line-height: 1.7;
     color: #444;
+    line-height: 1.7;
 }
 
 /* Buttons */
@@ -130,12 +124,11 @@ body {
 
 .btn {
     padding: 14px 30px;
-    font-size: 16px;
     border-radius: 30px;
-    text-decoration: none;
     font-weight: bold;
-    cursor: pointer;
+    text-decoration: none;
     border: none;
+    cursor: pointer;
 }
 
 .book-btn {
@@ -158,13 +151,14 @@ body {
     margin-bottom: 20px;
 }
 
-/* Cards */
+/* Card Grid */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 22px;
 }
 
+/* Card */
 .card {
     background: white;
     border-radius: 16px;
@@ -172,18 +166,27 @@ body {
     overflow: hidden;
 }
 
-.card img {
+/* ✅ FIXED IMAGE WRAPPER */
+.card-image {
     width: 100%;
-    height: 180px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #eef2ff;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 
+/* Card body */
 .card-body {
     padding: 16px;
 }
 
 .card-body h4 {
-    margin: 0 0 6px;
+    margin: 6px 0;
     font-size: 18px;
 }
 
@@ -192,6 +195,7 @@ body {
     color: #555;
 }
 
+/* Badge */
 .badge {
     background: #007bff;
     color: white;
@@ -199,12 +203,13 @@ body {
     border-radius: 20px;
     font-size: 12px;
     display: inline-block;
-    margin-bottom: 6px;
 }
 
+/* Price */
 .price-tag {
     font-weight: bold;
     color: #007bff;
+    margin-top: 6px;
 }
 
 /* Responsive */
@@ -213,8 +218,15 @@ body {
         flex-direction: column;
         text-align: center;
     }
+
     .image-box img {
         height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-image {
+        aspect-ratio: 4 / 3;
     }
 }
 </style>
@@ -228,7 +240,7 @@ body {
 <!-- DESTINATION DETAILS -->
 <div class="details-box">
     <div class="image-box">
-        <img src="uploads/<?= htmlspecialchars($dest['image']) ?>">
+        <img src="uploads/<?= htmlspecialchars($dest['image']) ?>" alt="">
     </div>
 
     <div class="info-box">
@@ -253,7 +265,11 @@ body {
 <div class="card-grid">
 <?php foreach ($hotels as $h): ?>
 <div class="card">
-    <img src="uploads/<?= htmlspecialchars($h['image']) ?>">
+
+    <div class="card-image">
+        <img src="<?= $h['image'] ? 'uploads/'.htmlspecialchars($h['image']) : 'assets/no-hotel.jpg' ?>">
+    </div>
+
     <div class="card-body">
         <span class="badge"><?= htmlspecialchars($h['type']) ?></span>
         <h4><?= htmlspecialchars($h['name']) ?></h4>
@@ -261,6 +277,7 @@ body {
         <p class="price-tag">$<?= number_format($h['price_per_night'], 2) ?> / night</p>
         <p><?= htmlspecialchars($h['amenities']) ?></p>
     </div>
+
 </div>
 <?php endforeach; ?>
 </div>

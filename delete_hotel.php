@@ -18,5 +18,5 @@ $hotel_id = (int)$_GET['id'];
 $delete = $conn->prepare("DELETE FROM hotels WHERE hotel_id = ?");
 $delete->execute([$hotel_id]);
 
-header("Location: manage_hotels.php?msg=deleted");
+header("Location: admin_manage_hotels.php?msg=deleted");
 exit;

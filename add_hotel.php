@@ -23,20 +23,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amenities = $_POST['amenities'];
 
     $imageName = "";
+
     if (!empty($_FILES['image']['name'])) {
-        $imageName = time() . "_" . $_FILES['image']['name'];
-        move_uploaded_file($_FILES['image']['tmp_name'], "../uploads/" . $imageName);
+
+        // Ensure uploads folder exists
+        if (!is_dir("uploads")) {
+            mkdir("uploads", 0777, true);
+        }
+
+        $imageName = time() . "_" . basename($_FILES['image']['name']);
+
+        move_uploaded_file(
+            $_FILES['image']['tmp_name'],
+            "uploads/" . $imageName  
+        );
     }
 
     $conn->prepare("
         INSERT INTO hotels
         (dest_id, name, type, price_per_night, rating, amenities, image)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ")->execute([$dest_id, $name, $type, $price, $rating, $amenities, $imageName]);
+    ")->execute([
+        $dest_id,
+        $name,
+        $type,
+        $price,
+        $rating,
+        $amenities,
+        $imageName
+    ]);
 
     $msg = "Hotel added successfully!";
 }
 ?>
+
 
 <!DOCTYPE html>
 <html>

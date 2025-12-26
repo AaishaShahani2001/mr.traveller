@@ -126,6 +126,7 @@ th {
     font-weight:600;
     cursor:pointer;
     position:relative;
+    margin-left:6px;
 }
 
 /* Tooltip */
@@ -254,9 +255,11 @@ th {
 <?php foreach ($hotels as $h): ?>
 <tr>
 <td>
-    <?php if ($h['image']): ?>
-    <img src="../uploads/<?= htmlspecialchars($h['image']) ?>" class="hotel-img">
-    <?php else: ?> — <?php endif; ?>
+    <?php if (!empty($h['image'])): ?>
+        <img src="uploads/<?= htmlspecialchars($h['image']) ?>" class="hotel-img">
+    <?php else: ?>
+        —
+    <?php endif; ?>
 </td>
 
 <td><?= htmlspecialchars($h['name']) ?></td>
@@ -265,15 +268,15 @@ th {
 
 <td>
 <?php
-$full = trim($h['amenities']);
+$full = trim($h['amenities'] ?? '');
 $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 ?>
 <div class="amenities">
-    <?= htmlspecialchars($short) ?>
+    <?= htmlspecialchars($short ?: '—') ?>
     <?php if (mb_strlen($full) > 40): ?>
-    <span class="view-more" data-full="<?= htmlspecialchars($full) ?>">
-        View more
-    </span>
+        <span class="view-more" data-full="<?= htmlspecialchars($full) ?>">
+            View more
+        </span>
     <?php endif; ?>
 </div>
 </td>
