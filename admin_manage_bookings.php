@@ -8,19 +8,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-/* ---------- Toast ---------- */
-$msg = $_GET['msg'] ?? "";
-
 /* ---------- Filters ---------- */
 $status = $_GET['status'] ?? 'all';
 $search = trim($_GET['search'] ?? '');
 $month  = $_GET['month'] ?? 'all';
 $year   = $_GET['year'] ?? date('Y');
-
-/* ---------- Pagination ---------- */
-$page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 8;
-$offset = ($page - 1) * $perPage;
 
 /* ---------- WHERE ---------- */
 $where = "WHERE 1";
@@ -47,41 +39,36 @@ if ($year !== 'all') {
     $params[] = $year;
 }
 
-/* ---------- Count ---------- */
-$countSql = "
-SELECT COUNT(*)
-FROM bookings b
-JOIN users u ON b.user_id = u.user_id
-JOIN destinations d ON b.dest_id = d.dest_id
-$where
-";
-$stmt = $conn->prepare($countSql);
-$stmt->execute($params);
-$totalRows = (int)$stmt->fetchColumn();
-$totalPages = max(1, ceil($totalRows / $perPage));
-$page = min($page, $totalPages);
-$offset = ($page - 1) * $perPage;
-
 /* ---------- Fetch ---------- */
 $sql = "
 SELECT 
-    b.*, 
-    u.full_name, 
-    d.title,
+    b.*,
+    u.full_name,
+    d.title AS destination,
+    h.name AS hotel_name,
+    h.type AS hotel_type,
+    f.transport_type,
+    f.provider_name,
     DATEDIFF(b.check_out, b.check_in) AS nights
 FROM bookings b
 JOIN users u ON b.user_id = u.user_id
 JOIN destinations d ON b.dest_id = d.dest_id
+LEFT JOIN hotels h ON b.hotel_id = h.hotel_id
+LEFT JOIN travel_facilities f ON b.facility_id = f.facility_id
 $where
 ORDER BY b.booking_id DESC
-LIMIT $perPage OFFSET $offset
 ";
+
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function q($arr = []) {
     return http_build_query(array_merge($_GET, $arr));
+}
+
+function formatDate($date) {
+    return $date ? date("d M, Y", strtotime($date)) : '—';
 }
 ?>
 
@@ -93,22 +80,29 @@ function q($arr = []) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing:border-box; font-family:"Segoe UI", Arial, sans-serif; }
+* { box-sizing:border-box; font-family:"Segoe UI", Arial; }
 body { margin:0; background:#f5f6fa; }
 .layout { display:flex; min-height:100vh; }
 
 /* Sidebar */
 .sidebar {
-    width:250px; background:#1f2937; color:white;
-    padding-top:30px; position:fixed; height:100%;
+    width:250px;
+    background:#1f2937;
+    color:white;
+    padding-top:30px;
+    position:fixed;
+    height:100%;
 }
 .sidebar h2 { text-align:center; margin-bottom:30px; }
 .sidebar a {
-    display:block; padding:14px 22px; color:#e5e7eb;
+    display:block;
+    padding:14px 22px;
+    color:#e5e7eb;
     text-decoration:none;
 }
 .sidebar a:hover, .sidebar a.active {
-    background:#2563eb; color:white;
+    background:#2563eb;
+    color:white;
 }
 
 /* Main */
@@ -116,107 +110,121 @@ body { margin:0; background:#f5f6fa; }
 
 /* Filters */
 .filters {
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
     background:white;
-    padding:16px;
+    padding:18px;
     border-radius:16px;
-    box-shadow:0 12px 30px rgba(0,0,0,0.12);
-    display:grid;
-    grid-template-columns:1fr auto;
-    gap:14px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
 }
 
 .status-links a {
-    margin-right:12px;
-    font-weight:bold;
+    margin-right:14px;
+    font-weight:700;
     text-decoration:none;
-    color:#555;
+    color:#6b7280;
 }
-.status-links a.active { color:#007bff; }
+.status-links a.active { color:#2563eb; }
 
 .filter-box {
     display:flex;
-    gap:8px;
+    gap:10px;
     flex-wrap:wrap;
 }
 .filter-box input,
 .filter-box select {
-    padding:10px;
+    padding:10px 14px;
     border-radius:10px;
     border:1px solid #ccc;
 }
 .filter-box button {
-    padding:10px 18px;
-    background:#007bff;
+    padding:10px 20px;
+    background:#2563eb;
     color:white;
     border:none;
     border-radius:10px;
-    cursor:pointer;
+    font-weight:700;
 }
 
 /* Table */
 .table-box {
-    max-width:1200px;
-    margin:18px auto;
+    max-width:1400px;
+    margin:24px auto;
     background:white;
     border-radius:16px;
-    box-shadow:0 12px 30px rgba(0,0,0,0.12);
-    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    overflow-x:auto;
 }
-table { width:100%; border-collapse:collapse; }
+table {
+    width:100%;
+    border-collapse:collapse;
+    min-width:1100px;
+}
 th {
-    background:#8e44ad; color:white;
-    padding:14px; text-align:left;
+    background:#2563eb;
+    color:white;
+    padding:14px;
+    text-align:left;
 }
-td { padding:14px; border-bottom:1px solid #eee; }
+td {
+    padding:14px;
+    border-bottom:1px solid #eee;
+}
 
 /* Status */
 .status {
-    font-weight:bold;
     padding:6px 14px;
-    border-radius:20px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:13px;
 }
 .pending { background:#fff3cd; color:#856404; }
 .confirmed { background:#e9f9ee; color:#2e7d32; }
 .cancelled { background:#fdecea; color:#c0392b; }
 
 /* Actions */
-.actions { display:flex; gap:8px; }
-.btn-action {
-    padding:8px 16px;
+.actions {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.btn {
+    padding:8px 14px;
     border-radius:999px;
     border:none;
-    font-weight:600;
+    font-weight:700;
     cursor:pointer;
 }
+.btn-view { background:#eef2ff; color:#2563eb; }
 .btn-approve { background:#22c55e; color:white; }
 .btn-cancel { background:#ef4444; color:white; }
 
-/* Modal */
-.modal-bg {
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.6);
-    display:none;
-    align-items:center;
-    justify-content:center;
+/* Expand */
+.expand-row { display:none; background:#f9fafb; }
+.expand-content {
+    padding:20px 30px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
 }
-.modal-bg.show { display:flex; }
-.modal {
+.expand-box {
     background:white;
-    padding:24px;
-    border-radius:16px;
-    max-width:420px;
-    width:100%;
+    padding:14px;
+    border-radius:12px;
+    box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
-.modal-actions {
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
+.expand-box h4 {
+    margin:0 0 6px;
+    font-size:13px;
+    color:#2563eb;
+    text-transform:uppercase;
 }
+.expand-box p { margin:0; font-weight:600; }
 
-/* Responsive */
 @media(max-width:900px){
     .sidebar { position:relative; width:100%; }
     .main { margin-left:0; }
@@ -229,7 +237,6 @@ td { padding:14px; border-bottom:1px solid #eee; }
 
 <div class="layout">
 
-<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
@@ -241,13 +248,12 @@ td { padding:14px; border-bottom:1px solid #eee; }
     <a href="logout.php">🚪 Logout</a>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
 <div class="filters">
     <div class="status-links">
-        <?php foreach (['all'=>'All','pending'=>'Pending','confirmed'=>'Confirmed','cancelled'=>'Cancelled'] as $k=>$v): ?>
-            <a class="<?= $status===$k?'active':'' ?>" href="?<?= q(['status'=>$k,'page'=>1]) ?>"><?= $v ?></a>
+        <?php foreach(['all'=>'All','pending'=>'Pending','confirmed'=>'Confirmed','cancelled'=>'Cancelled'] as $k=>$v): ?>
+            <a class="<?= $status===$k?'active':'' ?>" href="?<?= q(['status'=>$k]) ?>"><?= $v ?></a>
         <?php endforeach; ?>
     </div>
 
@@ -268,7 +274,7 @@ td { padding:14px; border-bottom:1px solid #eee; }
             <?php endfor; ?>
         </select>
 
-        <input type="text" name="search" placeholder="Search user or package" value="<?= htmlspecialchars($search) ?>">
+        <input type="text" name="search" placeholder="Search user or destination" value="<?= htmlspecialchars($search) ?>">
         <button>Apply</button>
     </form>
 </div>
@@ -278,7 +284,7 @@ td { padding:14px; border-bottom:1px solid #eee; }
 <thead>
 <tr>
     <th>User</th>
-    <th>Package</th>
+    <th>Destination</th>
     <th>Check-in</th>
     <th>Check-out</th>
     <th>Nights</th>
@@ -293,29 +299,38 @@ td { padding:14px; border-bottom:1px solid #eee; }
 <?php foreach ($bookings as $b): ?>
 <tr>
     <td><?= htmlspecialchars($b['full_name']) ?></td>
-    <td><?= htmlspecialchars($b['title']) ?></td>
-    <td><?= $b['check_in'] ?></td>
-    <td><?= $b['check_out'] ?></td>
+    <td><?= htmlspecialchars($b['destination']) ?></td>
+    <td><?= formatDate($b['check_in']) ?></td>
+    <td><?= formatDate($b['check_out']) ?></td>
     <td><?= $b['nights'] ?></td>
     <td><?= $b['number_of_people'] ?></td>
     <td>$<?= number_format($b['total_amount'],2) ?></td>
     <td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
     <td>
-        <?php if ($b['status']==='pending'): ?>
         <div class="actions">
-            <button class="btn-action btn-approve"
-                onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=confirmed'">
-                ✔ Approve
-            </button>
-            <button class="btn-action btn-cancel"
-                onclick="openCancelModal('admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled')">
-                ✖ Cancel
-            </button>
+            <button class="btn btn-view" onclick="toggleRow(<?= $b['booking_id'] ?>)">View</button>
+            <?php if ($b['status']==='pending'): ?>
+                <button class="btn btn-approve"
+                    onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=confirmed'">Approve</button>
+                <button class="btn btn-cancel"
+                    onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled'">Cancel</button>
+            <?php endif; ?>
         </div>
-        <?php else: ?> —
-        <?php endif; ?>
     </td>
 </tr>
+
+<tr class="expand-row" id="expand-<?= $b['booking_id'] ?>">
+<td colspan="9">
+    <div class="expand-content">
+        <div class="expand-box"><h4>Hotel</h4><p><?= $b['hotel_name'] ?: 'N/A' ?></p></div>
+        <div class="expand-box"><h4>Hotel Type</h4><p><?= $b['hotel_type'] ?: 'N/A' ?></p></div>
+        <div class="expand-box"><h4>Transport</h4><p><?= $b['transport_type'] ?: 'N/A' ?></p></div>
+        <div class="expand-box"><h4>Provider</h4><p><?= $b['provider_name'] ?: 'N/A' ?></p></div>
+        <div class="expand-box"><h4>Date Range</h4><p><?= formatDate($b['check_in']) ?> → <?= formatDate($b['check_out']) ?></p></div>
+    </div>
+</td>
+</tr>
+
 <?php endforeach; ?>
 </tbody>
 </table>
@@ -324,25 +339,10 @@ td { padding:14px; border-bottom:1px solid #eee; }
 </div>
 </div>
 
-<!-- CANCEL MODAL -->
-<div class="modal-bg" id="cancelModal">
-    <div class="modal">
-        <h3>Cancel Booking?</h3>
-        <p>This action cannot be undone.</p>
-        <div class="modal-actions">
-            <button onclick="closeCancelModal()">No</button>
-            <a id="cancelLink"><button class="btn-cancel">Yes, Cancel</button></a>
-        </div>
-    </div>
-</div>
-
 <script>
-function openCancelModal(url){
-    document.getElementById('cancelLink').href = url;
-    document.getElementById('cancelModal').classList.add('show');
-}
-function closeCancelModal(){
-    document.getElementById('cancelModal').classList.remove('show');
+function toggleRow(id){
+    const row = document.getElementById("expand-" + id);
+    row.style.display = row.style.display === "table-row" ? "none" : "table-row";
 }
 </script>
 

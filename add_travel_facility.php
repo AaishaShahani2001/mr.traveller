@@ -208,9 +208,8 @@ button:hover {
 
     <label>Transport Type</label>
     <select name="transport_type" required>
-        <option value="Flight">Flight</option>
         <option value="Bus">Bus</option>
-        <option value="Train">Train</option>
+        <option value="Car">Car</option>
         <option value="Taxi">Taxi</option>
         <option value="Boat">Boat</option>
     </select>
