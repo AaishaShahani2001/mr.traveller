@@ -319,7 +319,7 @@ body {
         <h3><?= htmlspecialchars($dest['title']) ?></h3>
         <p><?= htmlspecialchars($dest['country']) ?> - <?= htmlspecialchars($dest['city']) ?></p>
         <p><?= htmlspecialchars($dest['duration']) ?></p>
-        <div class="price">$<?= number_format($dest['price'],2) ?></div>
+        <div class="price">$<?= number_format($dest['price']) ?></div>
 
         <a class="btn" href="view_destination.php?id=<?= $dest['dest_id'] ?>">
             View Package

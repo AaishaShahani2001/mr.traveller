@@ -248,7 +248,7 @@ th {
 <p><strong>Transport:</strong> <?= htmlspecialchars($b['transport_type'] ?? 'N/A') ?></p>
 <p><strong>Dates:</strong> <?= $b['check_in'] ?> → <?= $b['check_out'] ?></p>
 <p><strong>People:</strong> <?= $b['number_of_people'] ?></p>
-<p><strong>Total:</strong> $<?= number_format($b['total_amount'],2) ?></p>
+<p><strong>Total:</strong> $<?= number_format($b['total_amount']) ?></p>
 <p><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></p>
 
 <div class="actions">

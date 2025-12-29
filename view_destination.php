@@ -246,7 +246,7 @@ body {
     <div class="info-box">
         <h2><?= htmlspecialchars($dest['title']) ?></h2>
         <p class="location"><?= htmlspecialchars($dest['country']) ?> — <?= htmlspecialchars($dest['city']) ?></p>
-        <p class="price">$<?= number_format($dest['price'], 2) ?></p>
+        <p class="price">$<?= number_format($dest['price']) ?></p>
         <p class="duration">Duration: <?= htmlspecialchars($dest['duration']) ?></p>
         <p class="desc"><?= nl2br(htmlspecialchars($dest['description'])) ?></p>
 
@@ -274,7 +274,7 @@ body {
         <span class="badge"><?= htmlspecialchars($h['type']) ?></span>
         <h4><?= htmlspecialchars($h['name']) ?></h4>
         <p>⭐ Rating: <?= $h['rating'] ?: 'N/A' ?></p>
-        <p class="price-tag">$<?= number_format($h['price_per_night'], 2) ?> / night</p>
+        <p class="price-tag">$<?= number_format($h['price_per_night']) ?> / night</p>
         <p><?= htmlspecialchars($h['amenities']) ?></p>
     </div>
 
@@ -298,7 +298,7 @@ body {
         <span class="badge"><?= htmlspecialchars($f['transport_type']) ?></span>
         <h4><?= htmlspecialchars($f['provider_name']) ?></h4>
         <p>Duration: <?= htmlspecialchars($f['duration']) ?></p>
-        <p class="price-tag">$<?= number_format($f['price'], 2) ?></p>
+        <p class="price-tag">$<?= number_format($f['price']) ?></p>
     </div>
 </div>
 <?php endforeach; ?>

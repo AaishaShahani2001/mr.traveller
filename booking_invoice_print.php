@@ -141,12 +141,12 @@ th {
             <td><?= $b['check_out']; ?></td>
             <td><?= $b['nights']; ?></td>
             <td><?= $b['number_of_people']; ?></td>
-            <td>$<?= number_format($b['total_amount'], 2); ?></td>
+            <td>$<?= number_format($b['total_amount']); ?></td>
         </tr>
     </table>
 
     <p class="total">
-        Total Amount: $<?= number_format($b['total_amount'], 2); ?>
+        Total Amount: $<?= number_format($b['total_amount']); ?>
     </p>
 
     <div class="footer">
