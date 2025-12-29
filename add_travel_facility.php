@@ -132,18 +132,25 @@ button {
     cursor:pointer;
 }
 
-button:hover {
-    background:#15803d;
-}
-
-/* ===== SUCCESS ===== */
-.success {
-    background:#d4edda;
-    color:#155724;
-    padding:12px 16px;
-    border-radius:10px;
-    margin-bottom:20px;
+/* ===== TOAST (NEW) ===== */
+.toast {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#16a34a;
+    color:white;
+    padding:14px 22px;
+    border-radius:12px;
     font-weight:600;
+    box-shadow:0 12px 30px rgba(0,0,0,.3);
+    opacity:0;
+    transform:translateY(-20px);
+    transition:.4s ease;
+    z-index:9999;
+}
+.toast.show {
+    opacity:1;
+    transform:translateY(0);
 }
 
 /* ===== RESPONSIVE ===== */
@@ -187,10 +194,6 @@ button:hover {
 
 <div class="card">
 
-<?php if ($msg): ?>
-<div class="success"><?= $msg ?></div>
-<?php endif; ?>
-
 <form method="post">
 
 <div class="grid">
@@ -209,7 +212,7 @@ button:hover {
     <label>Transport Type</label>
     <select name="transport_type" required>
         <option value="Bus">Bus</option>
-        <option value="Car">Car</option>
+        <option value="Jeep">Jeep</option>
         <option value="Taxi">Taxi</option>
         <option value="Boat">Boat</option>
     </select>
@@ -234,6 +237,16 @@ button:hover {
 
 </div>
 </div>
+
+<!-- ===== TOAST OUTPUT ===== -->
+<?php if ($msg): ?>
+<div class="toast" id="toast"><?= $msg ?></div>
+<script>
+const toast = document.getElementById("toast");
+setTimeout(() => toast.classList.add("show"), 200);
+setTimeout(() => toast.classList.remove("show"), 3200);
+</script>
+<?php endif; ?>
 
 </body>
 </html>

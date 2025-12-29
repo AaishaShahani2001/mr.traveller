@@ -12,51 +12,41 @@ $stmt->execute();
 $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $msg = "";
+$msgType = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $dest_id   = $_POST['dest_id'];
+        $name      = $_POST['name'];
+        $type      = $_POST['type'];
+        $price     = $_POST['price'];
+        $rating    = $_POST['rating'];
+        $amenities = $_POST['amenities'];
 
-    $dest_id   = $_POST['dest_id'];
-    $name      = $_POST['name'];
-    $type      = $_POST['type'];
-    $price     = $_POST['price'];
-    $rating    = $_POST['rating'];
-    $amenities = $_POST['amenities'];
+        $imageName = "";
 
-    $imageName = "";
-
-    if (!empty($_FILES['image']['name'])) {
-
-        // Ensure uploads folder exists
-        if (!is_dir("uploads")) {
-            mkdir("uploads", 0777, true);
+        if (!empty($_FILES['image']['name'])) {
+            if (!is_dir("uploads")) mkdir("uploads", 0777, true);
+            $imageName = time() . "_" . basename($_FILES['image']['name']);
+            move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $imageName);
         }
 
-        $imageName = time() . "_" . basename($_FILES['image']['name']);
+        $conn->prepare("
+            INSERT INTO hotels
+            (dest_id, name, type, price_per_night, rating, amenities, image)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ")->execute([
+            $dest_id, $name, $type, $price, $rating, $amenities, $imageName
+        ]);
 
-        move_uploaded_file(
-            $_FILES['image']['tmp_name'],
-            "uploads/" . $imageName  
-        );
+        $msg = "Hotel added successfully!";
+        $msgType = "success";
+    } catch (Exception $e) {
+        $msg = "Something went wrong!";
+        $msgType = "error";
     }
-
-    $conn->prepare("
-        INSERT INTO hotels
-        (dest_id, name, type, price_per_night, rating, amenities, image)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ")->execute([
-        $dest_id,
-        $name,
-        $type,
-        $price,
-        $rating,
-        $amenities,
-        $imageName
-    ]);
-
-    $msg = "Hotel added successfully!";
 }
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -65,29 +55,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing:border-box; font-family:"Segoe UI", Arial; }
-body { margin:0; background:#f5f7ff; }
+*{box-sizing:border-box;font-family:"Segoe UI",Arial}
+body{margin:0;background:#f5f7ff}
 
-.admin-wrapper { display:flex; min-height:100vh; }
-
-/* Sidebar */
-.sidebar {
-    width:250px; background:#1f2937; color:white;
-    padding-top:30px; position:fixed; height:100%;
+/* ===== TOPBAR (MOBILE) ===== */
+.topbar{
+    display:none;
+    background:#1f2937;
+    color:white;
+    padding:14px 18px;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:3000;
 }
-.sidebar h2 { text-align:center; margin-bottom:30px; }
-.sidebar a {
-    display:block; padding:14px 22px; color:#e5e7eb;
-    text-decoration:none;
+.menu-btn{font-size:22px;cursor:pointer}
+
+/* ===== LAYOUT ===== */
+.admin-wrapper{display:flex;min-height:100vh}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+    width:250px;
+    background:#1f2937;
+    color:white;
+    padding-top:30px;
+    position:fixed;
+    height:100%;
+    z-index:2000;
+    transition:transform .3s ease;
 }
-.sidebar a:hover, .sidebar a.active {
-    background:#2563eb; color:white;
+.sidebar.hide{transform:translateX(-100%)}
+.sidebar h2{text-align:center;margin-bottom:30px}
+.sidebar a{
+    display:block;padding:14px 22px;
+    color:#e5e7eb;text-decoration:none
+}
+.sidebar a:hover,.sidebar a.active{
+    background:#2563eb;color:white
 }
 
-/* Content */
-.content { flex:1; padding:40px; margin-left:250px;}
+/* ===== CONTENT ===== */
+.content{
+    flex:1;
+    padding:40px;
+    margin-left:250px;
+}
 
-.card {
+/* ===== CARD ===== */
+.card{
     background:white;
     padding:30px;
     border-radius:18px;
@@ -95,81 +112,106 @@ body { margin:0; background:#f5f7ff; }
     max-width:1000px;
 }
 
-.grid {
+/* ===== FORM ===== */
+.grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:20px;
 }
-
-label { font-weight:600; display:block; margin-top:10px; }
-input, select, textarea {
-    width:100%; padding:12px; border-radius:10px;
+label{font-weight:600;margin-top:10px;display:block}
+input,select,textarea{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
     border:1px solid #ccc;
 }
+textarea{resize:none}
 
-textarea { resize:none; }
-
-button {
+button{
     margin-top:25px;
     width:100%;
     padding:14px;
     border-radius:30px;
     border:none;
-    background:#007bff;
+    background:#2563eb;
     color:white;
     font-weight:bold;
     font-size:16px;
     cursor:pointer;
 }
 
-.success {
-    background:#d4edda; color:#155724;
-    padding:12px; border-radius:10px; margin-bottom:20px;
+/* ===== TOAST ===== */
+.toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    padding:14px 22px;
+    border-radius:14px;
+    color:white;
+    font-weight:600;
+    opacity:0;
+    transform:translateY(-20px);
+    transition:.4s;
+    z-index:9999;
 }
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}
+.toast.error{background:#dc2626}
 
+/* ===== MOBILE FIX (THE IMPORTANT PART) ===== */
 @media(max-width:900px){
-    .grid { grid-template-columns:1fr; }
-    .sidebar { width:100%; }
+    .topbar{display:flex}
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.show{transform:translateX(0)}
+    .content{
+        margin-left:0;
+        padding:20px;
+    }
+    .grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
+
+<!-- MOBILE TOPBAR -->
+<div class="topbar">
+    <span class="menu-btn" onclick="toggleSidebar()">☰</span>
+    <strong>Admin Panel</strong>
+</div>
+
 <div class="admin-wrapper">
 
-<!-- Sidebar -->
-<div class="sidebar">
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
     <a href="add_destination.php">➕ Add Destination</a>
     <a class="active" href="add_hotel.php">➕ Add Accommodation</a>
     <a href="admin_manage_hotels.php">🏨 Manage Hotels</a>
-    <a href="add_travel_facility.php">➕ Add Travel-Facility</a>
+    <a href="add_travel_facility.php">➕ Add Travel Facility</a>
     <a href="admin_manage_users.php">👤 Users</a>
     <a href="admin_manage_bookings.php">📅 Bookings</a>
     <a href="admin_manage_contact.php">📩 Messages</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
 
+<!-- CONTENT -->
 <div class="content">
 <h1>Add Hotel</h1>
 
 <div class="card">
-
-<?php if ($msg): ?><div class="success"><?= $msg ?></div><?php endif; ?>
-
 <form method="post" enctype="multipart/form-data">
-
 <div class="grid">
 
 <div>
 <label>Destination</label>
 <select name="dest_id" required>
 <option value="">Select Destination</option>
-<?php foreach ($destinations as $d): ?>
-<option value="<?= $d['dest_id'] ?>"><?= $d['title'] ?></option>
-<?php endforeach; ?>
+<?php foreach($destinations as $d): ?>
+<option value="<?= $d['dest_id'] ?>"><?= htmlspecialchars($d['title']) ?></option>
+<?php endforeach ?>
 </select>
 
 <label>Hotel Name</label>
@@ -199,12 +241,26 @@ button {
 </div>
 
 </div>
-
 <button>Add Hotel</button>
-
 </form>
 </div>
 </div>
 </div>
+
+<?php if ($msg): ?>
+<div class="toast <?= $msgType ?>" id="toast"><?= $msg ?></div>
+<script>
+const toast=document.getElementById("toast");
+setTimeout(()=>toast.classList.add("show"),200);
+setTimeout(()=>toast.classList.remove("show"),3000);
+</script>
+<?php endif; ?>
+
+<script>
+function toggleSidebar(){
+    document.getElementById("sidebar").classList.toggle("show");
+}
+</script>
+
 </body>
 </html>
