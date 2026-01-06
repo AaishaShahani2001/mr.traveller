@@ -217,7 +217,7 @@ td{padding:14px;border-bottom:1px solid #eee}
 .card-actions{margin-top:14px;display:flex;gap:10px}
 .card-actions button{flex:1}
 
-/* ===== MODAL (DESKTOP VIEW BUTTON USES THIS) ===== */
+/* ===== MODAL (DESKTOP VIEW BUTTON) ===== */
 .modal-bg{
     position:fixed;inset:0;background:rgba(0,0,0,.6);
     display:none;align-items:center;justify-content:center;z-index:9999;
@@ -268,7 +268,7 @@ td{padding:14px;border-bottom:1px solid #eee}
 
 <div class="layout">
 
-<!-- Sidebar (DESKTOP VISIBLE) -->
+<!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
@@ -352,7 +352,7 @@ td{padding:14px;border-bottom:1px solid #eee}
 </table>
 </div>
 
-<!-- ===== MOBILE CARDS (NO VIEW BUTTON) ===== -->
+<!-- ===== MOBILE CARDS ===== -->
 <div class="card-list">
 <?php foreach($bookings as $b): ?>
 <div class="booking-card">
@@ -400,7 +400,7 @@ td{padding:14px;border-bottom:1px solid #eee}
 
 <script>
 function toggleMenu(){
-    // only matters on mobile (CSS controls it)
+    // only matters on mobile 
     document.getElementById("sidebar").classList.toggle("open");
     document.getElementById("overlay").classList.toggle("show");
 }

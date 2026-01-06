@@ -518,7 +518,7 @@ $shortA = mb_strlen($fullA) > 90 ? mb_substr($fullA, 0, 90) . "…" : $fullA;
 <?php endif; ?>
 </div>
 
-<!-- ===== DELETE CONFIRM MODAL (NEW) ===== -->
+<!-- ===== DELETE CONFIRM MODAL ===== -->
 <div class="modal-bg" id="deleteModal">
     <div class="modal">
         <h3>Delete Hotel?</h3>

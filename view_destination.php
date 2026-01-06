@@ -166,7 +166,7 @@ body {
     overflow: hidden;
 }
 
-/* ✅ FIXED IMAGE WRAPPER */
+/*  FIXED IMAGE WRAPPER */
 .card-image {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -252,7 +252,9 @@ body {
 
         <div class="btn-row">
             <a class="btn book-btn" href="booking.php?id=<?= $dest_id ?>">Book Now</a>
-            <button class="btn wish-btn">Add to Wishlist</button>
+            <button class="btn wish-btn" onclick="addToWishlist(<?= $dest_id ?>)">
+                ❤️ Add to Wishlist
+            </button>
         </div>
     </div>
 </div>
@@ -309,5 +311,50 @@ body {
 </div>
 
 </div>
+
+<!-- Toast -->
+<div id="toast" style="
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#111827;
+    color:white;
+    padding:14px 18px;
+    border-radius:14px;
+    font-weight:700;
+    box-shadow:0 15px 40px rgba(0,0,0,.35);
+    display:none;
+    z-index:9999;
+"></div>
+
+<script>
+function showToast(msg, type="success"){
+    const toast = document.getElementById("toast");
+    toast.innerHTML = msg;
+    toast.style.background =
+        type === "success" ? "#16a34a" :
+        type === "info" ? "#2563eb" :
+        "#dc2626";
+    toast.style.display = "block";
+    setTimeout(()=>toast.style.display="none", 3500);
+}
+
+function addToWishlist(destId){
+    fetch(`wishlist_add.php?id=${destId}`, {
+        method: "GET",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        showToast(data.message, data.status);
+    })
+    .catch(() => {
+        showToast("Something went wrong", "error");
+    });
+}
+</script>
+
 </body>
 </html>

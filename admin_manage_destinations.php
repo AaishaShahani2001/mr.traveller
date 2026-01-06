@@ -182,7 +182,7 @@ img{width:90px;height:65px;object-fit:cover;border-radius:8px}
 .pagination a.active{background:#2563eb;color:white}
 .pagination .disabled{opacity:.4;pointer-events:none}
 
-/* ===== MODAL (FIXED) ===== */
+/* ===== MODAL ===== */
 .modal-bg{
     position:fixed;
     inset:0;
@@ -190,7 +190,7 @@ img{width:90px;height:65px;object-fit:cover;border-radius:8px}
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:9999; /* 🔥 FIX */
+    z-index:9999; 
 }
 .modal-bg.show{display:flex}
 .modal{
@@ -212,7 +212,7 @@ img{width:90px;height:65px;object-fit:cover;border-radius:8px}
     opacity:0;
     transform:translateY(-20px);
     transition:.4s;
-    z-index:10000; /* 🔥 FIX */
+    z-index:10000; 
 }
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.delete{background:#dc3545}

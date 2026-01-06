@@ -44,7 +44,7 @@ $errors = [];
 $toast = ""; // toast text
 $toastType = "error"; // error | success
 
-// keep sticky values (does not change UI)
+// keep sticky values
 $old = [
     'check_in' => '',
     'check_out' => '',
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    /* ---- Secure Total Calculation (do NOT trust JS total_price) ---- */
+    /* ---- Secure Total Calculation  ---- */
     $basePrice = (float)$dest['price'];
     $hotelPrice = isset($hotelRow) ? (float)$hotelRow['price_per_night'] : 0.0;
     $facilityPrice = isset($facRow) ? (float)$facRow['price'] : 0.0;
@@ -280,7 +280,7 @@ input, select {
     background: #005fcc;
 }
 
-/* Toast (NEW - does not change UI layout) */
+/* Toast */
 .toast{
     position:fixed;
     top:18px;
@@ -380,7 +380,7 @@ input, select {
     Total Price: $<span id="total">0.00</span>
 </div>
 
-<!-- JS price → PHP → total_amount -->
+<!--  price  → total_amount -->
 <input type="hidden" name="total_price" id="total_price">
 
 <button type="submit" class="btn">Confirm Booking</button>

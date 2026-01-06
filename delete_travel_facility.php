@@ -14,7 +14,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $id = (int)$_GET['id'];
 
-/* 🔒 CHECK IF USED IN BOOKINGS */
+/*  CHECK IF USED IN BOOKINGS */
 $check = $conn->prepare("
     SELECT COUNT(*) 
     FROM bookings 
@@ -27,7 +27,7 @@ if ($check->fetchColumn() > 0) {
     exit;
 }
 
-/* ✅ SAFE DELETE */
+/*  SAFE DELETE */
 $del = $conn->prepare("DELETE FROM travel_facilities WHERE facility_id = ?");
 $del->execute([$id]);
 

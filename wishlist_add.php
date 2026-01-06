@@ -48,7 +48,7 @@ if (
 ========================================================= */
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: auth.php");
     exit;
 }
 
@@ -113,7 +113,7 @@ body {
     gap:30px;
 }
 
-/* ===== NEW CARD DESIGN ===== */
+/* =====  CARD  ===== */
 .card {
     background:white;
     border-radius:22px;

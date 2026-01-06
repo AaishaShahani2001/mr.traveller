@@ -241,7 +241,7 @@ tr:hover td{background:#f2f6ff}
     color:white;
 }
 
-/* ===== MOBILE ONLY ===== */
+/* ===== MOBILE  ===== */
 @media(max-width:900px){
     .topbar{display:flex}
     .sidebar{transform:translateX(-100%)}

@@ -59,7 +59,7 @@ body{margin:0;background:#f5f7ff}
 .container{max-width:1400px;margin:auto;padding:40px 20px}
 .back-btn{color:#007bff;font-weight:bold;text-decoration:none}
 
-/* ===== DESKTOP TABLE (UNCHANGED) ===== */
+/* ===== DESKTOP TABLE ===== */
 table{
     width:100%;
     border-collapse:collapse;
@@ -219,7 +219,7 @@ th{background:#007bff;color:white}
 <p>You have no bookings yet.</p>
 <?php else: ?>
 
-<!-- ===== DESKTOP TABLE (UNCHANGED) ===== -->
+<!-- ===== DESKTOP TABLE ===== -->
 <table>
 <thead>
 <tr>
