@@ -60,24 +60,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing:border-box; font-family:"Segoe UI", Arial; }
-body { margin:0; background:#f5f7ff; }
+*{box-sizing:border-box;font-family:"Segoe UI",Arial}
+body{margin:0;background:#f5f7ff}
 
-/* Sidebar */
-.sidebar{
-    width:250px; background:#1f2937; color:#fff;
-    padding-top:30px; position:fixed; inset:0 auto 0 0;
+/* ===== MOBILE TOP BAR ===== */
+.topbar{
+    display:none;
+    position:fixed;
+    top:0;left:0;right:0;
+    height:56px;
+    background:#1f2937;
+    color:#fff;
+    align-items:center;
+    padding:0 16px;
+    z-index:1200;
 }
-.sidebar h2{ text-align:center; margin-bottom:30px; }
-.sidebar a{ display:block; padding:14px 22px; color:#e5e7eb; text-decoration:none; }
-.sidebar a:hover, .sidebar a.active{ background:#2563eb; color:#fff; }
+.hamburger{
+    font-size:22px;
+    cursor:pointer;
+    margin-right:12px;
+}
+.topbar-title{font-weight:700}
 
-/* Content */
+/* ===== SIDEBAR ===== */
+.sidebar{
+    width:250px;
+    background:#1f2937;
+    color:#fff;
+    padding-top:30px;
+    position:fixed;
+    inset:0 auto 0 0;
+    transition:.3s ease;
+    z-index:1100;
+}
+.sidebar.hide{transform:translateX(-100%)}
+.sidebar h2{text-align:center;margin-bottom:30px}
+.sidebar a{
+    display:block;
+    padding:14px 22px;
+    color:#e5e7eb;
+    text-decoration:none;
+}
+.sidebar a:hover,.sidebar a.active{
+    background:#2563eb;
+    color:#fff;
+}
+
+/* ===== OVERLAY ===== */
+.overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:1000;
+}
+.overlay.show{display:block}
+
+/* ===== CONTENT ===== */
 .content{
     margin-left:250px;
     padding:40px;
     min-height:100vh;
 }
+
+/* ===== CARD ===== */
 .card{
     background:#fff;
     padding:30px;
@@ -85,13 +131,15 @@ body { margin:0; background:#f5f7ff; }
     box-shadow:0 20px 50px rgba(0,0,0,.15);
     max-width:900px;
 }
+
+/* ===== FORM ===== */
 .grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:24px;
 }
-label{ font-weight:600; display:block; margin-top:12px; }
-input, select{
+label{font-weight:600;display:block;margin-top:12px}
+input,select{
     width:100%;
     padding:12px;
     border-radius:10px;
@@ -110,19 +158,34 @@ button{
     font-size:16px;
     cursor:pointer;
 }
-button:hover{ background:#005fcc; }
+button:hover{background:#005fcc}
 
+/* ===== MOBILE ONLY ===== */
 @media(max-width:900px){
-    .sidebar{ position:relative; width:100%; }
-    .content{ margin-left:0; padding:24px; }
-    .grid{ grid-template-columns:1fr; }
+    .topbar{display:flex}
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.show{transform:translateX(0)}
+    .content{
+        margin-left:0;
+        padding:24px;
+        padding-top:80px;
+    }
+    .grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<!-- ===== MOBILE TOP BAR ===== -->
+<div class="topbar">
+    <span class="hamburger" onclick="toggleMenu()">☰</span>
+    <span class="topbar-title">Edit Travel Facility</span>
+</div>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
@@ -137,50 +200,58 @@ button:hover{ background:#005fcc; }
     <a href="logout.php">🚪 Logout</a>
 </div>
 
+<!-- ===== CONTENT ===== -->
 <div class="content">
-    <h1>Edit Travel Facility</h1>
+<h1>Edit Travel Facility</h1>
 
-    <div class="card">
-        <form method="post">
+<div class="card">
+<form method="post">
 
-            <div class="grid">
-                <div>
-                    <label>Destination</label>
-                    <select name="dest_id" required>
-                        <?php foreach ($destinations as $d): ?>
-                        <option value="<?= $d['dest_id'] ?>"
-                            <?= ($d['dest_id'] == $facility['dest_id']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($d['title']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
+<div class="grid">
+<div>
+    <label>Destination</label>
+    <select name="dest_id" required>
+        <?php foreach($destinations as $d): ?>
+        <option value="<?= $d['dest_id'] ?>" <?= $d['dest_id']==$facility['dest_id']?'selected':'' ?>>
+            <?= htmlspecialchars($d['title']) ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
 
-                    <label>Transport Type</label>
-                    <select name="transport_type" required>
-                        <?php foreach (['Flight','Bus','Train','Taxi','Boat'] as $t): ?>
-                        <option value="<?= $t ?>" <?= ($facility['transport_type'] === $t) ? 'selected' : '' ?>>
-                            <?= $t ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div>
-                    <label>Provider Name</label>
-                    <input type="text" name="provider" value="<?= htmlspecialchars($facility['provider_name']) ?>">
-
-                    <label>Price</label>
-                    <input type="number" name="price" value="<?= htmlspecialchars($facility['price']) ?>">
-
-                    <label>Duration</label>
-                    <input type="text" name="duration" value="<?= htmlspecialchars($facility['duration']) ?>">
-                </div>
-            </div>
-
-            <button type="submit">Update Travel Facility</button>
-        </form>
-    </div>
+    <label>Transport Type</label>
+    <select name="transport_type" required>
+        <?php foreach(['Flight','Bus','Train','Taxi','Boat'] as $t): ?>
+        <option value="<?= $t ?>" <?= $facility['transport_type']===$t?'selected':'' ?>>
+            <?= $t ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
 </div>
+
+<div>
+    <label>Provider Name</label>
+    <input type="text" name="provider" value="<?= htmlspecialchars($facility['provider_name']) ?>">
+
+    <label>Price</label>
+    <input type="number" name="price" value="<?= htmlspecialchars($facility['price']) ?>">
+
+    <label>Duration</label>
+    <input type="text" name="duration" value="<?= htmlspecialchars($facility['duration']) ?>">
+</div>
+</div>
+
+<button type="submit">Update Travel Facility</button>
+
+</form>
+</div>
+</div>
+
+<script>
+function toggleMenu(){
+    sidebar.classList.toggle("show");
+    overlay.classList.toggle("show");
+}
+</script>
 
 </body>
 </html>

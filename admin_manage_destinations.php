@@ -4,7 +4,7 @@ require "config.php";
 
 /* ---------- Admin Protection ---------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: auth.php");
     exit;
 }
 

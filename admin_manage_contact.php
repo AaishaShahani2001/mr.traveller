@@ -4,7 +4,7 @@ require "config.php";
 
 /* ---------- Admin Protection ---------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: auth.php");
     exit;
 }
 
@@ -26,6 +26,36 @@ $messages = $conn->query("
 *{box-sizing:border-box;font-family:"Segoe UI",Arial}
 body{margin:0;background:#f5f6fa}
 
+/* ===== MOBILE TOP BAR ===== */
+.topbar{
+    display:none;
+    position:fixed;
+    top:0;left:0;right:0;
+    height:56px;
+    background:#1f2937;
+    color:white;
+    align-items:center;
+    padding:0 16px;
+    z-index:1200;
+}
+.hamburger{
+    font-size:22px;
+    cursor:pointer;
+    margin-right:12px;
+}
+.topbar-title{font-weight:700}
+
+/* ===== OVERLAY ===== */
+.overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:1000;
+}
+.overlay.show{display:block}
+
+/* ===== LAYOUT ===== */
 .layout{display:flex;min-height:100vh}
 
 /* ===== SIDEBAR ===== */
@@ -36,7 +66,10 @@ body{margin:0;background:#f5f6fa}
     padding-top:30px;
     position:fixed;
     height:100%;
+    transition:.3s ease;
+    z-index:1100;
 }
+.sidebar.hide{transform:translateX(-100%)}
 .sidebar h2{text-align:center;margin-bottom:30px}
 .sidebar a{
     display:block;
@@ -68,9 +101,7 @@ body{margin:0;background:#f5f6fa}
 .section h3{margin-bottom:20px}
 
 /* ===== TABLE (DESKTOP) ===== */
-.table-wrap{
-    overflow-x:auto;
-}
+.table-wrap{overflow-x:auto}
 table{
     width:100%;
     border-collapse:collapse;
@@ -125,35 +156,36 @@ td{
     padding:30px;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== MOBILE ONLY ===== */
 @media(max-width:900px){
-    .sidebar{
-        position:relative;
-        width:100%;
-        height:auto;
-    }
+    .topbar{display:flex}
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.show{transform:translateX(0)}
     .main{
         margin-left:0;
+        padding:24px;
+        padding-top:80px;
     }
-    .layout{
-        flex-direction:column;
-    }
-    .table-wrap{
-        display:none;
-    }
-    .card-list{
-        display:block;
-    }
+    .layout{flex-direction:column}
+    .table-wrap{display:none}
+    .card-list{display:block}
 }
 </style>
 </head>
 
 <body>
 
+<!-- ===== MOBILE TOP BAR ===== -->
+<div class="topbar">
+    <span class="hamburger" onclick="toggleMenu()">☰</span>
+    <span class="topbar-title">Messages</span>
+</div>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
 <div class="layout">
 
 <!-- ===== SIDEBAR ===== -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
@@ -224,5 +256,13 @@ td{
 </div>
 
 </div>
+
+<script>
+function toggleMenu(){
+    document.getElementById("sidebar").classList.toggle("show");
+    document.getElementById("overlay").classList.toggle("show");
+}
+</script>
+
 </body>
 </html>

@@ -320,8 +320,8 @@ th {
     align-items:center;
     justify-content:center;
 }
-.btn-cancel{background:#e5e7eb;color:#111827}
-.btn-confirm{background:#dc2626;color:#fff}
+.btn-cancel{background:#e5e7eb}
+.btn-confirm{background:#dc2626;color:#fff;text-decoration:none}
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:1000px){
@@ -430,7 +430,7 @@ $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 </tbody>
 </table>
 
-<!-- ===== MOBILE CARD VIEW (NEW) ===== -->
+<!-- ===== MOBILE CARD VIEW ===== -->
 <div class="card-list">
 <?php foreach ($hotels as $h): ?>
 <?php

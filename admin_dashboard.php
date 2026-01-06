@@ -11,8 +11,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 /* ---------- Stats ---------- */
 $totalUsers = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalDestinations = $conn->query("SELECT COUNT(*) FROM destinations")->fetchColumn();
-$totalHotels = $conn->query("SELECT COUNT(*) FROM hotels")->fetchColumn();                // ✅ NEW
-$totalFacilities = $conn->query("SELECT COUNT(*) FROM travel_facilities")->fetchColumn(); // ✅ NEW
+$totalHotels = $conn->query("SELECT COUNT(*) FROM hotels")->fetchColumn();
+$totalFacilities = $conn->query("SELECT COUNT(*) FROM travel_facilities")->fetchColumn();
 $totalBookings = $conn->query("SELECT COUNT(*) FROM bookings")->fetchColumn();
 
 /* ---------- Revenue ---------- */
@@ -44,15 +44,9 @@ $recentBookings = $conn->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-/* ---------- Monthly bookings for chart ---------- */
+/* ---------- Chart Data ---------- */
 $chartData = array_fill(1, 12, 0);
-
-$stmt = $conn->query("
-    SELECT MONTH(created_at) m, COUNT(*) total
-    FROM bookings
-    GROUP BY MONTH(created_at)
-");
-
+$stmt = $conn->query("SELECT MONTH(created_at) m, COUNT(*) total FROM bookings GROUP BY MONTH(created_at)");
 foreach ($stmt as $row) {
     $chartData[(int)$row['m']] = (int)$row['total'];
 }
@@ -65,92 +59,147 @@ foreach ($stmt as $row) {
 <title>Admin Dashboard | Mr.Traveller</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
-body { margin:0; background:#f5f6fa; }
+*{box-sizing:border-box;font-family:"Segoe UI",Arial}
+body{margin:0;background:#f5f6fa}
+.layout{display:flex;min-height:100vh}
 
-.layout { display:flex; min-height:100vh; }
-
-/* Sidebar */
-.sidebar {
-    width:250px; background:#1f2937; color:white;
-    padding-top:30px; position:fixed; height:100%;
+/* ===== TOPBAR (MOBILE) ===== */
+.topbar{
+    display:none;
+    position:fixed;
+    top:0;left:0;right:0;
+    height:56px;
+    background:#1f2937;
+    color:white;
+    align-items:center;
+    padding:0 16px;
+    z-index:1200;
 }
-.sidebar h2 { text-align:center; margin-bottom:30px; }
-.sidebar a {
-    display:block; padding:14px 22px; color:#e5e7eb;
+.menu-btn{
+    font-size:22px;
+    cursor:pointer;
+    margin-right:12px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+    width:250px;
+    background:#1f2937;
+    color:white;
+    padding-top:30px;
+    position:fixed;
+    height:100%;
+    transition:.3s ease;
+    z-index:1100;
+}
+.sidebar.hide{transform:translateX(-100%)}
+.sidebar h2{text-align:center;margin-bottom:30px}
+.sidebar a{
+    display:block;
+    padding:14px 22px;
+    color:#e5e7eb;
     text-decoration:none;
 }
-.sidebar a:hover, .sidebar a.active {
-    background:#2563eb; color:white;
+.sidebar a:hover,.sidebar a.active{
+    background:#2563eb;color:white
 }
 
-/* Main */
-.main { margin-left:250px; padding:24px; width:100%; }
+/* ===== OVERLAY ===== */
+.overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:1000;
+}
+.overlay.show{display:block}
+
+/* ===== MAIN ===== */
+.main{
+    margin-left:250px;
+    padding:24px;
+    width:100%;
+}
 
 /* Cards */
-.cards {
+.cards{
     display:grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:20px;
 }
-.card {
-    background:white; padding:20px; border-radius:16px;
+.card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
-.card h3 { margin:0; font-size:15px; color:#555; }
-.card span { font-size:30px; font-weight:bold; }
+.card h3{margin:0;font-size:15px;color:#555}
+.card span{font-size:30px;font-weight:bold}
 
 /* Revenue */
-.revenue {
+.revenue{
     display:grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:20px;
     margin-top:25px;
 }
 
-/* Section box */
-.section {
-    background:white; margin-top:25px;
-    padding:20px; border-radius:16px;
+/* Section */
+.section{
+    background:white;
+    margin-top:25px;
+    padding:20px;
+    border-radius:16px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
 
 /* Table */
-table {
-    width:100%; border-collapse:collapse;
-}
-th, td {
-    padding:12px; border-bottom:1px solid #eee;
-}
-th { text-align:left; color:#555; }
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #eee}
+th{text-align:left;color:#555}
 
-.status {
-    padding:5px 10px; border-radius:20px;
-    font-size:12px; font-weight:bold;
+/* Status */
+.status{
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
 }
-.pending { background:#fff3cd; color:#856404; }
-.confirmed { background:#e9f9ee; color:#2e7d32; }
-.cancelled { background:#fdecea; color:#c0392b; }
+.pending{background:#fff3cd;color:#856404}
+.confirmed{background:#e9f9ee;color:#2e7d32}
+.cancelled{background:#fdecea;color:#c0392b}
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media(max-width:900px){
-    .sidebar { position:relative; width:100%; }
-    .main { margin-left:0; }
-    .layout { flex-direction:column; }
+    .topbar{display:flex}
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.show{transform:translateX(0)}
+    .main{
+        margin-left:0;
+        padding-top:80px;
+    }
+    .layout{flex-direction:column}
 }
 </style>
 </head>
 
 <body>
 
+<!-- ===== MOBILE TOPBAR ===== -->
+<div class="topbar">
+    <span class="menu-btn" onclick="toggleMenu()">☰</span>
+    <strong>Admin Dashboard</strong>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
 <div class="layout">
 
-<!-- Sidebar -->
-<div class="sidebar">
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a class="active" href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
@@ -165,32 +214,28 @@ th { text-align:left; color:#555; }
     <a href="logout.php">🚪 Logout</a>
 </div>
 
-<!-- Main -->
+<!-- ===== MAIN ===== -->
 <div class="main">
 
-<!-- Stats -->
 <div class="cards">
     <div class="card"><h3>Total Users</h3><span><?= $totalUsers ?></span></div>
     <div class="card"><h3>Total Destinations</h3><span><?= $totalDestinations ?></span></div>
-    <div class="card"><h3>Total Hotels</h3><span><?= $totalHotels ?></span></div>          <!-- ✅ -->
-    <div class="card"><h3>Total Facilities</h3><span><?= $totalFacilities ?></span></div>  <!-- ✅ -->
+    <div class="card"><h3>Total Hotels</h3><span><?= $totalHotels ?></span></div>
+    <div class="card"><h3>Total Facilities</h3><span><?= $totalFacilities ?></span></div>
     <div class="card"><h3>Total Bookings</h3><span><?= $totalBookings ?></span></div>
 </div>
 
-<!-- Revenue -->
 <div class="revenue">
     <div class="card"><h3>Total Revenue</h3><span>$<?= number_format($totalRevenue,2) ?></span></div>
     <div class="card"><h3>This Month</h3><span>$<?= number_format($monthlyRevenue,2) ?></span></div>
     <div class="card"><h3>Pending Revenue</h3><span>$<?= number_format($pendingRevenue,2) ?></span></div>
 </div>
 
-<!-- Chart -->
 <div class="section">
     <h3>Monthly Bookings</h3>
     <canvas id="bookingChart" height="100"></canvas>
 </div>
 
-<!-- Recent bookings -->
 <div class="section">
     <h3>Recent Bookings</h3>
     <table>
@@ -215,17 +260,22 @@ th { text-align:left; color:#555; }
 </div>
 
 <script>
+function toggleMenu(){
+    document.getElementById("sidebar").classList.toggle("show");
+    document.getElementById("overlay").classList.toggle("show");
+}
+
 new Chart(document.getElementById('bookingChart'), {
-    type: 'bar',
-    data: {
-        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-        datasets: [{
-            label: 'Bookings',
-            data: <?= json_encode(array_values($chartData)) ?>,
-            backgroundColor: '#2563eb'
+    type:'bar',
+    data:{
+        labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets:[{
+            label:'Bookings',
+            data:<?= json_encode(array_values($chartData)) ?>,
+            backgroundColor:'#2563eb'
         }]
     },
-    options: { responsive:true }
+    options:{responsive:true}
 });
 </script>
 
