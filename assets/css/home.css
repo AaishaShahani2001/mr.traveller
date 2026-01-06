@@ -115,52 +115,108 @@ body {
     transform: translateY(-2px);
 }
 
-/* -------- Why Choose Us -------- */
+/* ================= WHY CHOOSE US ================= */
 .why-us {
     padding: 80px 20px;
+    background: linear-gradient(135deg, #eef2ff, #f8faff);
     text-align: center;
-    background: #fff;
+}
+
+.why-us .section-title {
+    font-size: 34px;
+    font-weight: 800;
+    margin-bottom: 50px;
+    color: #1e293b;
+    position: relative;
+}
+
+.why-us .section-title::after {
+    content: "";
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(to right, #2563eb, #38bdf8);
+    display: block;
+    margin: 14px auto 0;
+    border-radius: 10px;
 }
 
 .why-grid {
-    margin-top: 50px;
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 28px;
 }
 
 .why-card {
-    width: 230px;
-    padding: 30px 20px;
-    background: #ccd6ff;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    transition: transform 0.3s, box-shadow 0.3s;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 22px;
+    padding: 32px 26px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.12);
+    transition: all 0.35s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.why-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    opacity: 0;
+    transition: 0.35s ease;
+    z-index: 0;
+}
+
+.why-card:hover::before {
+    opacity: 0.08;
 }
 
 .why-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    transform: translateY(-10px);
+    box-shadow: 0 30px 60px rgba(37,99,235,0.25);
 }
 
 .why-card span {
-    font-size: 40px;
-    display: block;
-    margin-bottom: 15px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    margin-bottom: 18px;
+    border-radius: 50%;
+    font-size: 30px;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    color: white;
+    position: relative;
+    z-index: 1;
 }
 
 .why-card h3 {
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: 700;
     margin-bottom: 10px;
+    color: #1e293b;
+    position: relative;
+    z-index: 1;
 }
 
 .why-card p {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.5;
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
 }
 
+/* Mobile spacing */
+@media (max-width: 600px) {
+    .why-us {
+        padding: 60px 16px;
+    }
+}
 
 
 
@@ -375,7 +431,7 @@ body {
 .cta {
     position: relative;
     margin-top: 80px;
-    padding: 80px 20px;
+    padding: 90px 20px;
     text-align: center;
     background: url("../img/cta.jpg") center/cover no-repeat;
     color: white;
@@ -397,29 +453,43 @@ body {
 }
 
 .cta h2 {
-    font-size: 34px;
-    margin-bottom: 12px;
+    font-size: 38px;
+    margin-bottom: 14px;
+    font-weight: 800;
 }
 
 .cta p {
-    font-size: 16px;
-    margin-bottom: 25px;
+    font-size: 17px;
+    margin-bottom: 30px;
     opacity: 0.95;
 }
 
+/* CTA Button */
 .cta-btn {
-    padding: 14px 34px;
+    display: inline-block;
+    padding: 15px 38px;
     background: #00e0ff;
     color: #000;
-    font-weight: bold;
-    border-radius: 30px;
+    font-weight: 800;
+    font-size: 16px;
+    border-radius: 999px;
     text-decoration: none;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
 
 .cta-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0, 224, 255, 0.6);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 18px 40px rgba(0, 224, 255, 0.6);
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .cta h2 {
+        font-size: 28px;
+    }
+    .cta p {
+        font-size: 15px;
+    }
 }
 
 /* -------- Footer -------- */

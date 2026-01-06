@@ -140,7 +140,7 @@ if (!isset($_SESSION['user_id'])) {
 <section class="cta">
     <h2>Ready to Start Your Journey?</h2>
     <p>Book your next travel destination with Mr.Traveller!</p>
-    <a href="booking.php" class="cta-btn">Book Now</a>
+    <a href="destinations.php" class="cta-btn">Book Now</a>
 </section>
 
 <footer class="footer">
@@ -149,7 +149,7 @@ if (!isset($_SESSION['user_id'])) {
 
 <script>
 const track = document.getElementById("carouselTrack");
-const cardWidth = 305; // card width + gap
+const cardWidth = 300; // card width + gap
 let position = 0;
 
 function slideRight() {

@@ -272,7 +272,15 @@ td{padding:14px;border-bottom:1px solid #eee}
 <div class="sidebar" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
+    <a href="admin_manage_destinations.php">📍 Destinations</a>
+    <a href="add_destination.php">➕ Add Destination</a>
+    <a href="add_hotel.php">➕ Add Accommodation</a>
+    <a href="admin_manage_hotels.php">🏨 Manage Hotels</a>
+    <a href="add_travel_facility.php">➕ Add Travel Facility</a>
+    <a href="admin_manage_travel_facilities.php">🚗 Manage Travel Facilities</a>
+    <a href="admin_manage_users.php">👤 Users</a>
     <a class="active" href="admin_manage_bookings.php">📅 Bookings</a>
+    <a href="admin_manage_contact.php">📩 Messages</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
 
@@ -325,7 +333,7 @@ td{padding:14px;border-bottom:1px solid #eee}
 <td><?= formatDate($b['check_in']) ?></td>
 <td><?= formatDate($b['check_out']) ?></td>
 <td><?= $b['nights'] ?></td>
-<td>$<?= number_format($b['total_amount'],2) ?></td>
+<td>$<?= number_format($b['total_amount']) ?></td>
 <td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
 <td>
 <div class="actions">
@@ -360,7 +368,7 @@ td{padding:14px;border-bottom:1px solid #eee}
         <div class="card-item"><b>Check-out</b><?= formatDate($b['check_out']) ?></div>
         <div class="card-item"><b>Nights</b><?= $b['nights'] ?></div>
         <div class="card-item"><b>People</b><?= $b['number_of_people'] ?></div>
-        <div class="card-item"><b>Total</b>$<?= number_format($b['total_amount'],2) ?></div>
+        <div class="card-item"><b>Total</b>$<?= number_format($b['total_amount']) ?></div>
         <div class="card-item"><b>Hotel</b><?= $b['hotel_name'] ?: 'N/A' ?></div>
     </div>
 

@@ -243,7 +243,7 @@ setTimeout(()=>t.classList.remove("show"),3200);
 <td><?= htmlspecialchars($f['transport_type']) ?></td>
 <td><?= htmlspecialchars($f['provider_name'] ?: '—') ?></td>
 <td><?= htmlspecialchars($f['duration'] ?: '—') ?></td>
-<td>$<?= number_format($f['price'],2) ?></td>
+<td>$<?= number_format($f['price']) ?></td>
 <td class="actions">
 <a class="btn edit" href="edit_travel_facility.php?id=<?= $f['facility_id'] ?>">✏</a>
 <button class="btn delete" onclick="openDelete(<?= $f['facility_id'] ?>)">❌</button>

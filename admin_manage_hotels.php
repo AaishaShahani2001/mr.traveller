@@ -8,6 +8,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+/* ===== PAGINATION ===== */
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+/* Count total hotels */
+$countStmt = $conn->query("SELECT COUNT(*) FROM hotels");
+$totalRows = (int)$countStmt->fetchColumn();
+$totalPages = max(1, ceil($totalRows / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+
+
 /* Fetch hotels with destination */
 $stmt = $conn->prepare("
     SELECT 
@@ -22,7 +35,10 @@ $stmt = $conn->prepare("
     FROM hotels h
     JOIN destinations d ON h.dest_id = d.dest_id
     ORDER BY h.hotel_id DESC
+    LIMIT :limit OFFSET :offset
 ");
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $hotels = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -112,7 +128,7 @@ th {
     border-radius:8px;
 }
 
-/* ===== AMENITIES (TRUNCATE + TOOLTIP) ===== */
+/* ===== AMENITIES ===== */
 .amenities {
     max-width:220px;
     white-space:nowrap;
@@ -192,7 +208,7 @@ th {
     box-shadow:0 15px 40px rgba(0,0,0,.12);
 }
 
-/* ===== MOBILE CARD VIEW (NEW) ===== */
+/* ===== MOBILE CARD VIEW ===== */
 .card-list { display:none; }
 
 .hotel-card{
@@ -278,7 +294,29 @@ th {
     align-items:center;
 }
 
-/* ===== DELETE MODAL (NEW) ===== */
+/* ===== PAGINATION ===== */
+.pagination{
+    margin-top:25px;
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.pagination a{
+    padding:10px 14px;
+    border-radius:10px;
+    background:white;
+    border:1px solid #ddd;
+    text-decoration:none;
+    font-weight:bold;
+    color:#333;
+}
+.pagination a.active{
+    background:#2563eb;
+    color:white;
+}
+
+/* ===== DELETE MODAL  ===== */
 .modal-bg{
     position:fixed;
     inset:0;
@@ -370,7 +408,7 @@ th {
 </div>
 <?php else: ?>
 
-<!-- ===== DESKTOP TABLE (UNCHANGED) ===== -->
+<!-- ===== DESKTOP TABLE ===== -->
 <table>
 <thead>
 <tr>
@@ -415,7 +453,7 @@ $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 </div>
 </td>
 
-<td>$<?= number_format($h['price_per_night'],2) ?></td>
+<td>$<?= number_format($h['price_per_night']) ?></td>
 <td><?= $h['rating'] ?: 'N/A' ?></td>
 
 <td>
@@ -429,6 +467,13 @@ $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 <?php endforeach; ?>
 </tbody>
 </table>
+
+<!-- PAGINATION -->
+<div class="pagination">
+<?php for($i=1;$i<=$totalPages;$i++): ?>
+<a class="<?= $i==$page?'active':'' ?>" href="?page=<?= $i ?>"><?= $i ?></a>
+<?php endfor; ?>
+</div>
 
 <!-- ===== MOBILE CARD VIEW ===== -->
 <div class="card-list">
@@ -452,7 +497,7 @@ $shortA = mb_strlen($fullA) > 90 ? mb_substr($fullA, 0, 90) . "…" : $fullA;
     </div>
 
     <div class="card-meta">
-        <div class="meta-item"><b>Price / Night</b>$<?= number_format($h['price_per_night'],2) ?></div>
+        <div class="meta-item"><b>Price / Night</b>$<?= number_format($h['price_per_night']) ?></div>
         <div class="meta-item"><b>Rating</b><?= $h['rating'] ?: 'N/A' ?></div>
     </div>
 
