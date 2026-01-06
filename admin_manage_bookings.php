@@ -4,7 +4,7 @@ require "config.php";
 
 /* ---------- Admin only ---------- */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: auth.php");
     exit;
 }
 
@@ -66,7 +66,6 @@ $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 function q($arr = []) {
     return http_build_query(array_merge($_GET, $arr));
 }
-
 function formatDate($date) {
     return $date ? date("d M, Y", strtotime($date)) : '—';
 }
@@ -80,164 +79,152 @@ function formatDate($date) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-* { box-sizing:border-box; font-family:"Segoe UI", Arial; }
-body { margin:0; background:#f5f6fa; }
-.layout { display:flex; min-height:100vh; }
+*{box-sizing:border-box;font-family:"Segoe UI",Arial}
+body{margin:0;background:#f5f6fa}
+.layout{display:flex;min-height:100vh}
 
-/* Sidebar */
-.sidebar {
+/* ===== TOPBAR (MOBILE) ===== */
+.topbar{
+    display:none;
+    background:#1f2937;
+    color:white;
+    padding:14px 18px;
+    align-items:center;
+    justify-content:space-between;
+}
+.menu-btn{
+    font-size:22px;
+    cursor:pointer;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
     width:250px;
     background:#1f2937;
     color:white;
     padding-top:30px;
     position:fixed;
     height:100%;
+    transition:.3s;
 }
-.sidebar h2 { text-align:center; margin-bottom:30px; }
-.sidebar a {
-    display:block;
-    padding:14px 22px;
-    color:#e5e7eb;
-    text-decoration:none;
+.sidebar.hide{transform:translateX(-100%)}
+.sidebar h2{text-align:center;margin-bottom:30px}
+.sidebar a{
+    display:block;padding:14px 22px;
+    color:#e5e7eb;text-decoration:none
 }
-.sidebar a:hover, .sidebar a.active {
-    background:#2563eb;
-    color:white;
+.sidebar a:hover,.sidebar a.active{
+    background:#2563eb;color:white
 }
 
-/* Main */
-.main { margin-left:250px; padding:24px; width:100%; }
+/* ===== MAIN ===== */
+.main{margin-left:250px;padding:24px;width:100%}
 
-/* Filters */
-.filters {
-    max-width:1400px;
-    margin:auto;
-    background:white;
-    padding:18px;
+/* ===== FILTERS (UNCHANGED) ===== */
+.filters{
+    max-width:1400px;margin:auto;
+    background:white;padding:18px;
     border-radius:16px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:16px;
+    display:flex;justify-content:space-between;
+    flex-wrap:wrap;gap:16px;
+}
+.status-links a{
+    margin-right:14px;font-weight:700;
+    text-decoration:none;color:#6b7280
+}
+.status-links a.active{color:#2563eb}
+.filter-box{display:flex;gap:10px;flex-wrap:wrap}
+.filter-box input,.filter-box select{
+    padding:10px 14px;border-radius:10px;border:1px solid #ccc
+}
+.filter-box button{
+    padding:10px 20px;background:#2563eb;
+    color:white;border:none;border-radius:10px;
+    font-weight:700
 }
 
-.status-links a {
-    margin-right:14px;
-    font-weight:700;
-    text-decoration:none;
-    color:#6b7280;
-}
-.status-links a.active { color:#2563eb; }
-
-.filter-box {
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-}
-.filter-box input,
-.filter-box select {
-    padding:10px 14px;
-    border-radius:10px;
-    border:1px solid #ccc;
-}
-.filter-box button {
-    padding:10px 20px;
-    background:#2563eb;
-    color:white;
-    border:none;
-    border-radius:10px;
-    font-weight:700;
-}
-
-/* Table */
-.table-box {
-    max-width:1400px;
-    margin:24px auto;
-    background:white;
-    border-radius:16px;
+/* ===== TABLE (DESKTOP) ===== */
+.table-box{
+    max-width:1400px;margin:24px auto;
+    background:white;border-radius:16px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
-    overflow-x:auto;
+    overflow-x:auto
 }
-table {
-    width:100%;
-    border-collapse:collapse;
-    min-width:1100px;
-}
-th {
-    background:#2563eb;
-    color:white;
-    padding:14px;
-    text-align:left;
-}
-td {
-    padding:14px;
-    border-bottom:1px solid #eee;
-}
+table{width:100%;border-collapse:collapse;min-width:1100px}
+th{background:#2563eb;color:white;padding:14px;text-align:left}
+td{padding:14px;border-bottom:1px solid #eee}
 
-/* Status */
-.status {
-    padding:6px 14px;
-    border-radius:999px;
-    font-weight:700;
-    font-size:13px;
+/* ===== STATUS ===== */
+.status{
+    padding:6px 14px;border-radius:999px;
+    font-weight:700;font-size:13px
 }
-.pending { background:#fff3cd; color:#856404; }
-.confirmed { background:#e9f9ee; color:#2e7d32; }
-.cancelled { background:#fdecea; color:#c0392b; }
+.pending{background:#fff3cd;color:#856404}
+.confirmed{background:#e9f9ee;color:#2e7d32}
+.cancelled{background:#fdecea;color:#c0392b}
 
-/* Actions */
-.actions {
-    display:flex;
-    flex-direction:column;
-    gap:8px;
+/* ===== ACTIONS ===== */
+.actions{display:flex;flex-direction:column;gap:8px}
+.btn{
+    padding:8px 14px;border-radius:999px;
+    border:none;font-weight:700;cursor:pointer
 }
-.btn {
-    padding:8px 14px;
-    border-radius:999px;
-    border:none;
-    font-weight:700;
-    cursor:pointer;
-}
-.btn-view { background:#eef2ff; color:#2563eb; }
-.btn-approve { background:#22c55e; color:white; }
-.btn-cancel { background:#ef4444; color:white; }
+.btn-view{background:#eef2ff;color:#2563eb}
+.btn-approve{background:#22c55e;color:white}
+.btn-cancel{background:#ef4444;color:white}
 
-/* Expand */
-.expand-row { display:none; background:#f9fafb; }
-.expand-content {
-    padding:20px 30px;
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:18px;
+/* ===== MOBILE CARD VIEW ===== */
+.card-list{display:none}
+.booking-card{
+    background:white;border-radius:16px;
+    padding:18px;margin-bottom:16px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12)
 }
-.expand-box {
-    background:white;
-    padding:14px;
-    border-radius:12px;
-    box-shadow:0 6px 16px rgba(0,0,0,.08);
+.card-header{
+    display:flex;justify-content:space-between;
+    align-items:center;margin-bottom:6px
 }
-.expand-box h4 {
-    margin:0 0 6px;
-    font-size:13px;
-    color:#2563eb;
-    text-transform:uppercase;
+.card-header h4{margin:0;font-size:16px}
+.card-meta{font-size:13px;color:#6b7280}
+.card-grid{
+    margin-top:12px;display:grid;
+    grid-template-columns:1fr 1fr;gap:10px
 }
-.expand-box p { margin:0; font-weight:600; }
+.card-item{
+    background:#f8fafc;padding:10px;
+    border-radius:12px;font-size:14px
+}
+.card-item b{
+    display:block;font-size:12px;
+    color:#6b7280;margin-bottom:4px
+}
+.card-actions{margin-top:14px;display:flex;gap:10px}
+.card-actions button{flex:1}
 
+/* ===== RESPONSIVE ===== */
 @media(max-width:900px){
-    .sidebar { position:relative; width:100%; }
-    .main { margin-left:0; }
-    .layout { flex-direction:column; }
+    .topbar{display:flex}
+    .sidebar{position:fixed;z-index:1000}
+    .main{margin-left:0}
+    .table-box{display:none}
+    .card-list{display:block}
 }
 </style>
 </head>
 
 <body>
 
+<!-- ===== MOBILE TOPBAR ===== -->
+<div class="topbar">
+    <span class="menu-btn" onclick="toggleSidebar()">☰</span>
+    <strong>Admin Panel</strong>
+</div>
+
 <div class="layout">
 
-<div class="sidebar">
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar hide" id="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin_dashboard.php">📊 Dashboard</a>
     <a href="admin_manage_destinations.php">📍 Destinations</a>
@@ -252,8 +239,10 @@ td {
     <a href="logout.php">🚪 Logout</a>
 </div>
 
+<!-- ===== MAIN ===== -->
 <div class="main">
 
+<!-- FILTERS (UNCHANGED) -->
 <div class="filters">
     <div class="status-links">
         <?php foreach(['all'=>'All','pending'=>'Pending','confirmed'=>'Confirmed','cancelled'=>'Cancelled'] as $k=>$v): ?>
@@ -283,22 +272,15 @@ td {
     </form>
 </div>
 
+<!-- DESKTOP TABLE -->
 <div class="table-box">
 <table>
 <thead>
 <tr>
-    <th>User</th>
-    <th>Destination</th>
-    <th>Check-in</th>
-    <th>Check-out</th>
-    <th>Nights</th>
-    <th>People</th>
-    <th>Total</th>
-    <th>Status</th>
-    <th>Action</th>
+    <th>User</th><th>Destination</th><th>Check-in</th><th>Check-out</th>
+    <th>Nights</th><th>People</th><th>Total</th><th>Status</th><th>Action</th>
 </tr>
 </thead>
-
 <tbody>
 <?php foreach ($bookings as $b): ?>
 <tr>
@@ -312,7 +294,6 @@ td {
     <td><span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span></td>
     <td>
         <div class="actions">
-            <button class="btn btn-view" onclick="toggleRow(<?= $b['booking_id'] ?>)">View</button>
             <?php if ($b['status']==='pending'): ?>
                 <button class="btn btn-approve"
                     onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=confirmed'">Approve</button>
@@ -322,31 +303,48 @@ td {
         </div>
     </td>
 </tr>
-
-<tr class="expand-row" id="expand-<?= $b['booking_id'] ?>">
-<td colspan="9">
-    <div class="expand-content">
-        <div class="expand-box"><h4>Hotel</h4><p><?= $b['hotel_name'] ?: 'N/A' ?></p></div>
-        <div class="expand-box"><h4>Hotel Type</h4><p><?= $b['hotel_type'] ?: 'N/A' ?></p></div>
-        <div class="expand-box"><h4>Transport</h4><p><?= $b['transport_type'] ?: 'N/A' ?></p></div>
-        <div class="expand-box"><h4>Provider</h4><p><?= $b['provider_name'] ?: 'N/A' ?></p></div>
-        <div class="expand-box"><h4>Date Range</h4><p><?= formatDate($b['check_in']) ?> → <?= formatDate($b['check_out']) ?></p></div>
-    </div>
-</td>
-</tr>
-
 <?php endforeach; ?>
 </tbody>
 </table>
+</div>
+
+<!-- MOBILE CARDS -->
+<div class="card-list">
+<?php foreach ($bookings as $b): ?>
+<div class="booking-card">
+    <div class="card-header">
+        <h4><?= htmlspecialchars($b['full_name']) ?></h4>
+        <span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span>
+    </div>
+    <div class="card-meta"><?= htmlspecialchars($b['destination']) ?></div>
+
+    <div class="card-grid">
+        <div class="card-item"><b>Check-in</b><?= formatDate($b['check_in']) ?></div>
+        <div class="card-item"><b>Check-out</b><?= formatDate($b['check_out']) ?></div>
+        <div class="card-item"><b>Nights</b><?= $b['nights'] ?></div>
+        <div class="card-item"><b>People</b><?= $b['number_of_people'] ?></div>
+        <div class="card-item"><b>Total</b>$<?= number_format($b['total_amount'],2) ?></div>
+        <div class="card-item"><b>Hotel</b><?= $b['hotel_name'] ?: 'N/A' ?></div>
+    </div>
+
+    <?php if ($b['status']==='pending'): ?>
+    <div class="card-actions">
+        <button class="btn btn-approve"
+            onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=confirmed'">Approve</button>
+        <button class="btn btn-cancel"
+            onclick="location.href='admin_update_booking.php?id=<?= $b['booking_id'] ?>&status=cancelled'">Cancel</button>
+    </div>
+    <?php endif; ?>
+</div>
+<?php endforeach; ?>
 </div>
 
 </div>
 </div>
 
 <script>
-function toggleRow(id){
-    const row = document.getElementById("expand-" + id);
-    row.style.display = row.style.display === "table-row" ? "none" : "table-row";
+function toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('hide');
 }
 </script>
 
