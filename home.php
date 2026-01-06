@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id'])) {
             <a href="my_bookings.php">Bookings</a>
             <a href="wishlist_add.php">Wishlist</a>
             <a href="contact.php">Contact</a>
-            <a href="logout.php" class="btn">Logout</a>
+            <a href="logout.php" class="logout-btn">Logout</a>
         </nav>
     </div>
 </header>
