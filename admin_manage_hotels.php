@@ -192,6 +192,137 @@ th {
     box-shadow:0 15px 40px rgba(0,0,0,.12);
 }
 
+/* ===== MOBILE CARD VIEW (NEW) ===== */
+.card-list { display:none; }
+
+.hotel-card{
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 15px 40px rgba(0,0,0,.12);
+    padding:16px;
+    margin-bottom:16px;
+}
+
+.card-top{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.card-img{
+    width:90px;
+    height:70px;
+    border-radius:12px;
+    object-fit:cover;
+    flex:0 0 auto;
+    background:#eef2ff;
+}
+
+.card-title{
+    margin:0;
+    font-size:16px;
+    font-weight:800;
+    color:#111827;
+}
+
+.card-sub{
+    margin:4px 0 0;
+    font-size:13px;
+    color:#6b7280;
+}
+
+.card-meta{
+    margin-top:12px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    font-size:13px;
+    color:#374151;
+}
+
+.meta-item{
+    background:#f8fafc;
+    border:1px solid #eef2f7;
+    border-radius:12px;
+    padding:10px;
+}
+
+.meta-item b{
+    display:block;
+    font-size:12px;
+    color:#6b7280;
+    margin-bottom:4px;
+}
+
+.card-amenities{
+    margin-top:12px;
+    background:#f8fafc;
+    border:1px solid #eef2f7;
+    border-radius:12px;
+    padding:10px;
+    font-size:13px;
+    color:#374151;
+    line-height:1.5;
+}
+
+.card-actions{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+}
+.card-actions a, .card-actions button{
+    flex:1;
+    text-align:center;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+}
+
+/* ===== DELETE MODAL (NEW) ===== */
+.modal-bg{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    padding:18px;
+}
+.modal-bg.show{display:flex}
+
+.modal{
+    background:#fff;
+    width:100%;
+    max-width:420px;
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+    text-align:center;
+}
+.modal h3{margin:0 0 8px}
+.modal p{margin:0;color:#555}
+
+.modal-actions{
+    margin-top:18px;
+    display:flex;
+    gap:12px;
+    justify-content:center;
+}
+.modal-actions button, .modal-actions a{
+    padding:10px 18px;
+    border-radius:999px;
+    border:none;
+    font-weight:800;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+.btn-cancel{background:#e5e7eb;color:#111827}
+.btn-confirm{background:#dc2626;color:#fff}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:1000px){
     .sidebar {
@@ -202,9 +333,10 @@ th {
         margin-left:0;
         padding:24px;
     }
-    table {
-        font-size:13px;
-    }
+
+    /* mobile: cards instead of table */
+    table{display:none}
+    .card-list{display:block}
 }
 </style>
 </head>
@@ -238,6 +370,7 @@ th {
 </div>
 <?php else: ?>
 
+<!-- ===== DESKTOP TABLE (UNCHANGED) ===== -->
 <table>
 <thead>
 <tr>
@@ -288,7 +421,8 @@ $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 <td>
 <div class="actions">
     <a class="btn edit-btn" href="edit_hotel.php?id=<?= $h['hotel_id'] ?>">✏️ Edit</a>
-    <a class="btn delete-btn" href="delete_hotel.php?id=<?= $h['hotel_id'] ?>">❌ Delete</a>
+    <a class="btn delete-btn" href="delete_hotel.php?id=<?= $h['hotel_id'] ?>"
+       onclick="return confirmDelete(event, 'delete_hotel.php?id=<?= $h['hotel_id'] ?>')">❌ Delete</a>
 </div>
 </td>
 </tr>
@@ -296,8 +430,75 @@ $short = mb_strlen($full) > 40 ? mb_substr($full, 0, 40) . "…" : $full;
 </tbody>
 </table>
 
+<!-- ===== MOBILE CARD VIEW (NEW) ===== -->
+<div class="card-list">
+<?php foreach ($hotels as $h): ?>
+<?php
+$fullA = trim($h['amenities'] ?? '');
+$shortA = mb_strlen($fullA) > 90 ? mb_substr($fullA, 0, 90) . "…" : $fullA;
+?>
+<div class="hotel-card">
+    <div class="card-top">
+        <?php if (!empty($h['image'])): ?>
+            <img class="card-img" src="uploads/<?= htmlspecialchars($h['image']) ?>" alt="hotel">
+        <?php else: ?>
+            <div class="card-img"></div>
+        <?php endif; ?>
+
+        <div>
+            <p class="card-title"><?= htmlspecialchars($h['name']) ?></p>
+            <p class="card-sub"><?= htmlspecialchars($h['destination']) ?> • <?= htmlspecialchars($h['type']) ?></p>
+        </div>
+    </div>
+
+    <div class="card-meta">
+        <div class="meta-item"><b>Price / Night</b>$<?= number_format($h['price_per_night'],2) ?></div>
+        <div class="meta-item"><b>Rating</b><?= $h['rating'] ?: 'N/A' ?></div>
+    </div>
+
+    <div class="card-amenities">
+        <b>Amenities</b><br>
+        <?= htmlspecialchars($shortA ?: '—') ?>
+    </div>
+
+    <div class="card-actions">
+        <a class="btn edit-btn" href="edit_hotel.php?id=<?= $h['hotel_id'] ?>">✏️ Edit</a>
+        <button class="btn delete-btn" type="button"
+                onclick="openDeleteModal('delete_hotel.php?id=<?= $h['hotel_id'] ?>')">❌ Delete</button>
+    </div>
+</div>
+<?php endforeach; ?>
+</div>
+
 <?php endif; ?>
 </div>
+
+<!-- ===== DELETE CONFIRM MODAL (NEW) ===== -->
+<div class="modal-bg" id="deleteModal">
+    <div class="modal">
+        <h3>Delete Hotel?</h3>
+        <p>This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" type="button" onclick="closeDeleteModal()">Cancel</button>
+            <a id="deleteLink" class="btn-confirm" href="#">Yes, Delete</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(url){
+    document.getElementById("deleteLink").href = url;
+    document.getElementById("deleteModal").classList.add("show");
+}
+function closeDeleteModal(){
+    document.getElementById("deleteModal").classList.remove("show");
+}
+function confirmDelete(e, url){
+    e.preventDefault();
+    openDeleteModal(url);
+    return false;
+}
+</script>
 
 </body>
 </html>
