@@ -62,6 +62,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class="carousel-window">
             <div class="carousel-track" id="carouselTrack">
 
+            <a href="destinations.php?search=maldives" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/maldives.jpg">
                     <div class="card-info">
@@ -69,7 +70,8 @@ if (!isset($_SESSION['user_id'])) {
                         <p>26+ Activities • 29+ Tours</p>
                     </div>
                 </div>
-
+            </a>
+            <a href="destinations.php?search=greece" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/greece.jpg">
                     <div class="card-info">
@@ -77,7 +79,9 @@ if (!isset($_SESSION['user_id'])) {
                         <p>41+ Activities • 10+ Tours</p>
                     </div>
                 </div>
+            </a>
 
+            <a href="destinations.php?search=brazil" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/brazil.jpg">
                     <div class="card-info">
@@ -85,7 +89,9 @@ if (!isset($_SESSION['user_id'])) {
                         <p>56+ Tours • 12+ Tours</p>
                     </div>
                 </div>
+            </a>
 
+            <a href="destinations.php?search=paris" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/Paris-eiffel.avif">
                     <div class="card-info">
@@ -93,7 +99,9 @@ if (!isset($_SESSION['user_id'])) {
                         <p>48+ Activities • 29 Tours</p>
                     </div>
                 </div>
+            </a>
 
+            <a href="destinations.php?search=singapore" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/singapore.jpg">
                     <div class="card-info">
@@ -101,7 +109,9 @@ if (!isset($_SESSION['user_id'])) {
                         <p>39+ Activities • 42+ Tours</p>
                     </div>
                 </div>
+            </a>
 
+            <a href="destinations.php?search=italy" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/italy.webp">
                     <div class="card-info">
@@ -109,7 +119,9 @@ if (!isset($_SESSION['user_id'])) {
                         <p>19+ Activities</p>
                     </div>
                 </div>
+            </a>
 
+            <a href="destinations.php?search=india" class="carousel-link">
                 <div class="carousel-card">
                     <img src="assets/img/INDIA.jpg">
                     <div class="card-info">
@@ -117,6 +129,7 @@ if (!isset($_SESSION['user_id'])) {
                         <p>35+ Activities • 42+ Tours </p>
                     </div>
                 </div>
+            </a>
 
             </div>
         </div>

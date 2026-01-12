@@ -263,6 +263,7 @@ body {
     margin-bottom: 40px;
 }
 
+
 /* Carousel layout */
 .carousel-wrapper {
     display: flex;
@@ -281,6 +282,12 @@ body {
     gap: 25px;
     transition: transform 0.6s ease;
 }
+
+.carousel-link{
+    text-decoration:none;
+    color:inherit;
+}
+
 
 /* Cards */
 .carousel-card {

@@ -59,7 +59,7 @@ body{margin:0;background:#f5f7ff}
 .container{max-width:1400px;margin:auto;padding:40px 20px}
 .back-btn{color:#007bff;font-weight:bold;text-decoration:none}
 
-/* ===== DESKTOP TABLE ===== */
+/* ===== TABLE ===== */
 table{
     width:100%;
     border-collapse:collapse;
@@ -68,11 +68,7 @@ table{
     overflow:hidden;
     box-shadow:0 15px 40px rgba(0,0,0,.12);
 }
-th,td{
-    padding:14px;
-    border-bottom:1px solid #eee;
-    text-align:center;
-}
+th,td{padding:14px;border-bottom:1px solid #eee;text-align:center}
 th{background:#007bff;color:white}
 
 /* ===== STATUS ===== */
@@ -85,7 +81,7 @@ th{background:#007bff;color:white}
 .confirmed{background:#d4edda;color:#155724}
 .cancelled{background:#f8d7da;color:#721c24}
 
-/* ===== ACTIONS ===== */
+/* ===== BUTTONS ===== */
 .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .btn{
     padding:8px 14px;
@@ -115,12 +111,9 @@ th{background:#007bff;color:white}
     font-weight:bold;
     color:#333;
 }
-.pagination a.active{
-    background:#007bff;
-    color:white;
-}
+.pagination a.active{background:#007bff;color:white}
 
-/* ===== MOBILE CARDS ===== */
+/* ===== MOBILE ===== */
 .mobile-cards{display:none}
 .booking-card{
     background:white;
@@ -128,82 +121,100 @@ th{background:#007bff;color:white}
     padding:18px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
-.card-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-.card-header h3{
-    margin:0;
-    font-size:18px;
-}
-.card-location{
-    margin:6px 0 12px;
-    color:#555;
-    font-size:14px;
-}
-.card-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    font-size:14px;
-}
-.card-item{
-    background:#f1f5ff;
-    padding:10px;
-    border-radius:12px;
-}
-.card-item b{
-    display:block;
-    font-size:12px;
-    color:#555;
-    margin-bottom:4px;
-}
-.card-actions{
-    margin-top:14px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-}
-.card-actions .btn{flex:1}
 
-/* ===== VIEW MODAL ===== */
-.modal-bg{
+/* ===== VIEW MODAL ===== */ 
+.modal-bg{ 
+    position:fixed; 
+    inset:0; 
+    background:rgba(0,0,0,.55); 
+    display:none; 
+    justify-content:center; 
+    align-items:center; 
+    z-index:9999; 
+} 
+.modal{ 
+    background:white; 
+    padding:24px; 
+    border-radius:16px; 
+    max-width:420px; 
+    width:100%; 
+} 
+.modal h3{
+    margin-top:0
+} 
+.modal p{
+    margin:6px 0
+} 
+.modal button{
+     margin-top:14px; 
+     width:100%; 
+     padding:10px; 
+     border:none; 
+     border-radius:999px; 
+     background:#007bff; 
+     color:white; 
+     font-weight:bold; 
+}
+
+/* ===== CANCEL CONFIRM MODAL ===== */
+.cancel-modal-bg{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,.55);
+    background:rgba(0,0,0,.65);
     display:none;
     justify-content:center;
     align-items:center;
-    z-index:9999;
+    z-index:10000;
 }
-.modal{
+
+.cancel-modal{
     background:white;
-    padding:24px;
-    border-radius:16px;
-    max-width:420px;
+    padding:26px;
+    border-radius:18px;
+    max-width:400px;
     width:100%;
+    text-align:center;
 }
-.modal h3{margin-top:0}
-.modal p{margin:6px 0}
-.modal button{
-    margin-top:14px;
-    width:100%;
+
+.cancel-modal h3{
+    margin-top:0;
+    color:#b91c1c;
+}
+
+.cancel-modal p{
+    font-size:14px;
+    color:#444;
+}
+
+.cancel-actions{
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+}
+
+.cancel-actions button{
+    flex:1;
     padding:10px;
     border:none;
     border-radius:999px;
-    background:#007bff;
-    color:white;
-    font-weight:bold;
+    font-weight:800;
+    cursor:pointer;
 }
+
+.cancel-no{
+    background:#e5e7eb;
+}
+
+.cancel-yes{
+    background:#dc2626;
+    color:white;
+}
+
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:900px){
     table{display:none}
-    .mobile-cards{
-        display:grid;
-        gap:18px;
-    }
+    .mobile-cards{display:grid;gap:18px}
 }
 </style>
 </head>
@@ -211,7 +222,6 @@ th{background:#007bff;color:white}
 <body>
 
 <div class="container">
-
 <a href="home.php" class="back-btn">← Back to Home</a>
 <h2>My Bookings</h2>
 
@@ -219,7 +229,6 @@ th{background:#007bff;color:white}
 <p>You have no bookings yet.</p>
 <?php else: ?>
 
-<!-- ===== DESKTOP TABLE ===== -->
 <table>
 <thead>
 <tr>
@@ -247,9 +256,11 @@ th{background:#007bff;color:white}
 <div class="actions">
 <button class="btn view-btn" onclick='openView(<?= json_encode($b) ?>)'>View</button>
 <a class="btn edit-btn" href="user_update_booking.php?id=<?= $b['booking_id'] ?>">Edit</a>
+
 <?php if($b['status']==='pending'): ?>
-<button class="btn cancel-btn" onclick="openCancel('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">Cancel</button>
+<button class="btn cancel-btn" onclick="openCancelModal(<?= $b['booking_id'] ?>)">Cancel</button>
 <?php endif; ?>
+
 <a class="btn invoice-btn" href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>" target="_blank">Invoice</a>
 </div>
 </td>
@@ -257,38 +268,6 @@ th{background:#007bff;color:white}
 <?php endforeach; ?>
 </tbody>
 </table>
-
-<!-- ===== MOBILE CARDS ===== -->
-<div class="mobile-cards">
-<?php foreach($bookings as $b): ?>
-<div class="booking-card">
-    <div class="card-header">
-        <h3><?= htmlspecialchars($b['title']) ?></h3>
-        <span class="status <?= $b['status'] ?>"><?= ucfirst($b['status']) ?></span>
-    </div>
-
-    <div class="card-location">
-        <?= htmlspecialchars($b['country']) ?> – <?= htmlspecialchars($b['city']) ?>
-    </div>
-
-    <div class="card-grid">
-        <div class="card-item"><b>Check-in</b><?= $b['check_in'] ?></div>
-        <div class="card-item"><b>Check-out</b><?= $b['check_out'] ?></div>
-        <div class="card-item"><b>People</b><?= $b['number_of_people'] ?></div>
-        <div class="card-item"><b>Total</b>$<?= number_format($b['total_amount']) ?></div>
-    </div>
-
-    <div class="card-actions">
-        <button class="btn view-btn" onclick='openView(<?= json_encode($b) ?>)'>View</button>
-        <a class="btn edit-btn" href="user_update_booking.php?id=<?= $b['booking_id'] ?>">Edit</a>
-        <?php if($b['status']==='pending'): ?>
-            <button class="btn cancel-btn" onclick="openCancel('user_cancel_booking.php?id=<?= $b['booking_id'] ?>')">Cancel</button>
-        <?php endif; ?>
-        <a class="btn invoice-btn" href="booking_invoice_print.php?id=<?= $b['booking_id'] ?>" target="_blank">Invoice</a>
-    </div>
-</div>
-<?php endforeach; ?>
-</div>
 
 <div class="pagination">
 <?php for($i=1;$i<=$totalPages;$i++): ?>
@@ -304,7 +283,23 @@ th{background:#007bff;color:white}
 <div class="modal" id="viewContent"></div>
 </div>
 
+<!-- CANCEL CONFIRMATION MODAL -->
+<div class="cancel-modal-bg" id="cancelModal">
+    <div class="cancel-modal">
+        <h3>Cancel Booking?</h3>
+        <p>Are you sure you want to cancel this booking?</p>
+
+        <div class="cancel-actions">
+            <button class="cancel-no" onclick="closeCancel()">No, Keep</button>
+            <button class="cancel-yes" onclick="confirmCancel()">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
+let cancelUrl = "";
+
 function openView(b){
     document.getElementById("viewContent").innerHTML = `
         <h3>Booking Details</h3>
@@ -315,17 +310,23 @@ function openView(b){
         <p><b>Dates:</b> ${b.check_in} → ${b.check_out}</p>
         <p><b>People:</b> ${b.number_of_people}</p>
         <p><b>Total:</b> $${b.total_amount}</p>
-        <button onclick="closeView()">Close</button>
+        <button id="btn-close" onclick="closeView()">Close</button>
     `;
     document.getElementById("viewModal").style.display="flex";
 }
 function closeView(){
     document.getElementById("viewModal").style.display="none";
 }
-function openCancel(url){
-    if(confirm("Are you sure you want to cancel this booking?")){
-        location.href = url;
-    }
+
+function openCancelModal(id){
+    cancelUrl = "user_cancel_booking.php?id=" + id;
+    document.getElementById("cancelModal").style.display="flex";
+}
+function closeCancel(){
+    document.getElementById("cancelModal").style.display="none";
+}
+function confirmCancel(){
+    location.href = cancelUrl;
 }
 </script>
 
