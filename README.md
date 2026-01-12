@@ -15,9 +15,9 @@ Unlike the academic version, this implementation focuses on:
 - Destination exploration with detailed views
 - Hotel, resort, and villa management with amenities
 - Booking system with validation and status handling
-- Wishlist feature with AJAX and toast notifications
+- Wishlist feature and toast notifications
 - Admin dashboard with booking and revenue charts
-- Fully responsive UI for desktop and mobile
+
 
 ### Tech Stack
 - **Backend:** PHP (PDO)
